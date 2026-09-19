@@ -8,3 +8,5 @@
 - Normal tests use fake transports. A real Jev evaluation sends data externally and incurs usage; use synthetic examples for smoke tests.
 - Validate with `python -m unittest discover -s tests -v`, `ruff check .`, `actionlint`, and a package build when packaging changes.
 - Preserve unrelated edits. Do not post Issue/Slack messages as a side effect of tests.
+
+- Maintainer commits to this public repository must use the configured GitHub noreply email. Check author and committer metadata before pushing. Never merge or push the old private repository history into this repository; transfer changes as reviewed patches instead.
