@@ -1,0 +1,37 @@
+# Copy to .github/workflows/issue-model.yml in a consuming public or private repository.
+# Replace @main with a reviewed release tag or commit SHA for production use.
+name: Recommend issue models
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number in this repository
+        required: true
+        type: string
+      post_comment:
+        description: Post or update the recommendation comment
+        default: false
+        type: boolean
+      policy:
+        description: Selection policy
+        type: choice
+        options: [balanced, quality, cost, value, total-cost]
+        default: balanced
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: issue-model-${{ github.repository }}-${{ inputs.issue_number }}
+  cancel-in-progress: false
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: buckmoon/jev-issue-router@main
+        id: recommendation
+        with:
+          issue-number: ${{ inputs.issue_number }}
+          policy: ${{ inputs.policy }}
+          post-comment: ${{ inputs.post_comment }}
+          typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}

@@ -1,0 +1,54 @@
+name: Jev Issue Router
+description: Recommend OpenAI, Claude and Grok model/effort pairs for a GitHub Issue
+inputs:
+  issue-number:
+    description: Issue number in the target repository
+    required: true
+  repository:
+    description: Target OWNER/REPO (defaults to the calling repository)
+    default: ${{ github.repository }}
+  typesafe-api-key:
+    description: TypeSafe API key, supplied from an Actions Secret
+    required: true
+  github-token:
+    description: GitHub token with Issues read (and write when posting) permission
+    default: ${{ github.token }}
+  policy:
+    description: balanced, quality, cost, value (cheap first attempt) or total-cost (including rework)
+    default: balanced
+  jev-model:
+    description: Jev evaluator model ID
+    default: jev-latest
+  catalog:
+    description: Optional absolute catalog path on the runner
+    default: ''
+  post-comment:
+    description: Post or update this bot's recommendation comment
+    default: 'false'
+outputs:
+  status:
+    description: selected, partial or needs_context
+    value: ${{ steps.evaluate.outputs.status }}
+  result-path:
+    description: Absolute path to the result JSON
+    value: ${{ steps.evaluate.outputs.result-path }}
+  report-path:
+    description: Absolute path to the Markdown report
+    value: ${{ steps.evaluate.outputs.report-path }}
+runs:
+  using: composite
+  steps:
+    - name: Evaluate issue with Jev
+      id: evaluate
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.action_path }}
+        TYPESAFE_API_KEY: ${{ inputs.typesafe-api-key }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        ROUTER_REPOSITORY: ${{ inputs.repository }}
+        ROUTER_ISSUE_NUMBER: ${{ inputs.issue-number }}
+        ROUTER_POST_COMMENT: ${{ inputs.post-comment }}
+        ISSUE_MODEL_POLICY: ${{ inputs.policy }}
+        JEV_MODEL: ${{ inputs.jev-model }}
+        ISSUE_MODEL_CATALOG: ${{ inputs.catalog }}
+      run: python3 -P -m issue_router.action

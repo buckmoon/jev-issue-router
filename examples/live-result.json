@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "policy_version": "2026-09-18.1",
+  "policy": "balanced",
+  "catalog_version": "2026-09-18.1",
+  "catalog_verified_at": "2026-09-18",
+  "created_at": "2026-09-18T14:38:09.403344+00:00",
+  "input_sha256": "7cddc21152586b4eda8d199243e7e0e54a88598460eae79bb8c9c22853758e58",
+  "status": "selected",
+  "assessment": {
+    "readiness": {
+      "type": "choice",
+      "choice": "ready",
+      "confidence": 0.82,
+      "probabilities": {
+        "insufficient": 0.09,
+        "ready": 0.91
+      }
+    },
+    "reasoning": {
+      "type": "choice",
+      "choice": "routine",
+      "confidence": 1.0,
+      "probabilities": {
+        "routine": 1.0,
+        "moderate": 0.0,
+        "unknown": 0.0,
+        "frontier": 0.0,
+        "complex": 0.0
+      }
+    },
+    "scope": {
+      "type": "choice",
+      "choice": "local",
+      "confidence": 1.0,
+      "probabilities": {
+        "cross_system": 0.0,
+        "cross_component": 0.0,
+        "local": 1.0,
+        "unknown": 0.0
+      }
+    },
+    "risk": {
+      "type": "choice",
+      "choice": "low",
+      "confidence": 0.99,
+      "probabilities": {
+        "high": 0.0,
+        "moderate": 0.0,
+        "low": 1.0,
+        "unknown": 0.0
+      }
+    },
+    "verification": {
+      "type": "choice",
+      "choice": "simple",
+      "confidence": 0.99,
+      "probabilities": {
+        "simple": 1.0,
+        "difficult": 0.0,
+        "unknown": 0.0,
+        "integration": 0.0
+      }
+    }
+  },
+  "recommendations": {
+    "openai": {
+      "judgment": {
+        "type": "choice",
+        "choice": "gpt-5.6-luna__low",
+        "confidence": 0.88,
+        "probabilities": {
+          "gpt-5.6-luna__xhigh": 0.0,
+          "gpt-5.6-sol__low": 0.0,
+          "gpt-5.6-sol__high": 0.0,
+          "gpt-5.6-luna__max": 0.0,
+          "gpt-6-astra__max": 0.0,
+          "gpt-5.6-terra__max": 0.0,
+          "gpt-5.6-terra__xhigh": 0.0,
+          "gpt-5.6-terra__medium": 0.0,
+          "gpt-5.6-luna__high": 0.0,
+          "gpt-5.6-luna__low": 0.9,
+          "gpt-5.6-sol__xhigh": 0.0,
+          "gpt-5.6-luna__medium": 0.03,
+          "gpt-6-astra__xhigh": 0.0,
+          "gpt-5.6-terra__low": 0.07,
+          "needs_context": 0.0,
+          "gpt-6-astra__medium": 0.0,
+          "gpt-5.6-sol__max": 0.0,
+          "gpt-5.6-sol__medium": 0.0,
+          "gpt-6-astra__high": 0.0,
+          "gpt-5.6-terra__high": 0.0,
+          "gpt-6-astra__low": 0.0
+        }
+      },
+      "status": "selected",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "api_parameters": {
+        "model": "gpt-5.6-luna",
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "selection_guidance": "Economical candidate for routine, well-specified, easily verified work.",
+      "sources": [
+        "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+      ]
+    },
+    "claude": {
+      "judgment": {
+        "type": "choice",
+        "choice": "claude-sonnet-5__low",
+        "confidence": 0.97,
+        "probabilities": {
+          "claude-opus-5__high": 0.0,
+          "claude-fable-5-1__low": 0.0,
+          "claude-sonnet-5__medium": 0.01,
+          "claude-opus-5__medium": 0.0,
+          "claude-opus-5__low": 0.01,
+          "claude-fable-5-1__xhigh": 0.0,
+          "claude-sonnet-5__xhigh": 0.0,
+          "claude-opus-5__max": 0.0,
+          "claude-fable-5-1__high": 0.0,
+          "claude-sonnet-5__high": 0.0,
+          "claude-sonnet-5__max": 0.0,
+          "claude-fable-5-1__max": 0.0,
+          "needs_context": 0.0,
+          "claude-opus-5__xhigh": 0.0,
+          "claude-sonnet-5__low": 0.98,
+          "claude-fable-5-1__medium": 0.0
+        }
+      },
+      "status": "selected",
+      "model": "claude-sonnet-5",
+      "effort": "low",
+      "api_parameters": {
+        "model": "claude-sonnet-5",
+        "thinking": {
+          "type": "adaptive"
+        },
+        "output_config": {
+          "effort": "low"
+        }
+      },
+      "selection_guidance": "Fast balanced candidate for scoped coding and moderate debugging.",
+      "sources": [
+        "https://platform.claude.com/docs/en/models/overview",
+        "https://platform.claude.com/docs/en/build-with-claude/effort"
+      ]
+    },
+    "grok": {
+      "judgment": {
+        "type": "choice",
+        "choice": "grok-4.6__low",
+        "confidence": 0.99,
+        "probabilities": {
+          "grok-4.6__low": 0.98,
+          "needs_context": 0.01,
+          "grok-4.6__high": 0.0,
+          "grok-4.6__medium": 0.01,
+          "grok-4.6__xhigh": 0.0
+        }
+      },
+      "status": "selected",
+      "model": "grok-4.6",
+      "effort": "low",
+      "api_parameters": {
+        "model": "grok-4.6",
+        "reasoning": {
+          "effort": "low"
+        }
+      },
+      "selection_guidance": "Current flagship Grok coding candidate; tune effort to task difficulty. Only Grok model in the initial catalog, per current official general coding guidance.",
+      "sources": [
+        "https://docs.x.ai/developers/models",
+        "https://docs.x.ai/developers/model-capabilities/text/reasoning"
+      ]
+    }
+  },
+  "jev_calls": [
+    {
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 1208,
+        "output_tokens": 220
+      }
+    },
+    {
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 3190,
+        "output_tokens": 684
+      }
+    }
+  ],
+  "warnings": [
+    "確率・confidenceは実装成功率ではありません。選定ルールは実Issueで未校正です。",
+    "APIのモデルID・推論設定です。各CLI/UIの対応やアカウント利用可否は別途確認が必要です。"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "display_information": {"name": "Jev Issue Router", "description": "Issueから各社のモデル・推論設定を推薦"},
+  "features": {
+    "bot_user": {"display_name": "Jev Issue Router", "always_online": false},
+    "slash_commands": [{"command": "/issue-model", "description": "Issueに適したモデルと推論設定を推薦", "usage_hint": "https://github.com/owner/repo/issues/123", "should_escape": false}]
+  },
+  "oauth_config": {"scopes": {"bot": ["commands"]}},
+  "settings": {"socket_mode_enabled": true, "org_deploy_enabled": false, "token_rotation_enabled": false}
+}

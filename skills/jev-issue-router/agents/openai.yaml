@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jev Issue Router"
+  short_description: "Issueに適したOpenAI・Claude・Grokのモデルと推論設定をJevで選定"
+  default_prompt: "$jev-issue-router このIssueに適した各社のモデルと推論設定を評価してください。"

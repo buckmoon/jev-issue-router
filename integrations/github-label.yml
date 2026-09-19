@@ -1,0 +1,22 @@
+# Optional. Applying the recommend-model label triggers evaluation AND a bot comment.
+name: Recommend models on label
+on:
+  issues:
+    types: [labeled]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: issue-model-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+jobs:
+  recommend:
+    if: github.event.label.name == 'recommend-model'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: buckmoon/jev-issue-router@main
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          post-comment: 'true'
+          typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}

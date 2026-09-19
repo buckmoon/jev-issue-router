@@ -1,0 +1,38 @@
+name: Recommend issue models
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number in this repository
+        required: true
+        type: string
+      post_comment:
+        description: Post or update the recommendation comment
+        default: false
+        type: boolean
+      policy:
+        description: Selection policy
+        type: choice
+        options: [balanced, quality, cost, value, total-cost]
+        default: balanced
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: issue-model-${{ github.repository }}-${{ inputs.issue_number }}
+  cancel-in-progress: false
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: ./
+        with:
+          issue-number: ${{ inputs.issue_number }}
+          policy: ${{ inputs.policy }}
+          post-comment: ${{ inputs.post_comment }}
+          typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}
