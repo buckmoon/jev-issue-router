@@ -6,10 +6,10 @@
 PR更新・mainへの既存更新フローを維持し、承認人数や必須チェックを勝手に追加しません。
 公開設定の変更はセキュリティ機能の有効化とは別の判断です。
 
-2026-09-19の導入時点ではprivateです。Dependabot alerts/security updatesを有効化し、
+2026-09-19に公開しました。Dependabot alerts/security updatesを有効化し、
 Actions既定権限をreadへ変更しました。既存workflowは必要な権限を明示済みです。
 ActionsによるPR作成・承認の許可と、各GitHub Appの権限は変更していません。
-CodeQL、Secret Scanning、Push Protection、PVRは無料で使えるpublic化後に設定します。
+CodeQL（Python / GitHub Actions）、Secret Scanning、Push Protection、PVRも有効化しています。
 有料のAdvanced Security/Code Security/Secret Protectionは有効化していません。
 
 ## gh-secureの安全な使い方
@@ -32,10 +32,10 @@ Branch Protectionの選択は承認1件、古い承認の無効化、会話解�
 Rulesetsがあれば警告しますが、適用ブランチ・継承・内容の実査は別途必要です。
 CodeQLのdefault setupは既存advanced workflowを無効化するため、横展開時は特に確認します。
 
-## 公開後の有効化
+## 設定の確認・再構築
 
 管理者が可視性・保護ルール・既存CodeQL構成を再確認し、変更前設定を保存してから実行します。
-以下は実行手順であり、このファイルを追加しても設定は変わりません。
+以下は状態確認と再構築の手順です。通常は確認だけを行い、設定変更前には再度影響を評価してください。
 
 ```sh
 gh repo view buckmoon/jev-issue-router --json visibility,defaultBranchRef
