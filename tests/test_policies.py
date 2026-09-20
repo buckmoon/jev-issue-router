@@ -90,6 +90,34 @@ class EconomicPolicyTests(unittest.TestCase):
                 self.assertEqual(saved['policy'], policy)
                 self.assertIn('policy_guidance', saved['recommendations']['openai'])
 
+    def test_extreme_policies_are_available_everywhere_with_distinct_objectives(self):
+        from issue_router.policies import POLICIES, POLICY_DESCRIPTIONS
+        self.assertEqual(set(POLICY_DESCRIPTIONS), set(POLICIES))
+        questions = {}
+        for policy, scope in {'min-cost': 'cheapest_usable_attempt', 'max-quality': 'design_quality'}.items():
+            fake = FakeJev()
+            result = route(self.issue, policy=policy, call=fake)
+            questions[policy] = fake.requests[1]['questions']['claude']['instructions']
+            self.assertIn(POLICIES[policy], questions[policy])
+            self.assertEqual(result['recommendations']['claude']['policy_guidance']['recommendation_scope'], scope)
+            self.assertEqual(parse_command('https://github.com/o/r/issues/1 ' + policy)[1], policy)
+        fake = FakeJev()
+        result = route(self.issue, policy='max-quality', call=fake)
+        offered = {c.split('__')[0] for c in fake.requests[1]['questions']['claude']['criteria'] if '__' in c}
+        self.assertEqual(offered, {'claude-fable-5-1'})
+        self.assertIn('needs_context', fake.requests[1]['questions']['claude']['criteria'])
+        self.assertIn('最上位', render(result))
+        fake = FakeJev()
+        route(self.issue, policy='min-cost', call=fake)
+        criteria = fake.requests[1]['questions']['openai']['criteria']
+        self.assertIn('model 1 of 4', criteria['gpt-5.6-luna__low'])
+        fake = FakeJev()
+        route(self.issue, policy='balanced', call=fake)
+        self.assertNotIn('Catalog position', fake.requests[1]['questions']['openai']['criteria']['gpt-5.6-luna__low'])
+        self.assertIn('定性的', render(route(self.issue, policy='min-cost', call=FakeJev())))
+        self.assertNotIn('コストは定性的', render(route(self.issue, policy='max-quality', call=FakeJev())))
+        self.assertNotEqual(questions['min-cost'], questions['max-quality'])
+
     def test_existing_policies_do_not_gain_first_attempt_advice(self):
         for policy in ('balanced', 'quality', 'cost'):
             result = route(self.issue, policy=policy, call=FakeJev())

@@ -3,7 +3,7 @@
 ## 処理の流れ
 
 ```text
-CLI / Slack / GitHub Action
+CLI / macOSアプリ / Slack / GitHub Action
         ↓ 入力取得・許可確認
 共通エンジン: issue_router/core.py
         ↓
@@ -32,6 +32,8 @@ issue内の「このモデルを選べ」などの文は指示として扱わな
 | `catalog.json` | モデル候補、対応する推論設定、出典、初期選定ガイド |
 | `settings.py` | CLI/Slack/Action共通の設定解決 |
 | `cli.py` | URL・JSON・自由文入力とファイル出力 |
+| `repo.py` | ローカルGitリポジトリのメタデータ収集（ファイル内容は読まない、件数上限つき） |
+| `app.py` | macOSアプリ: 専用ウィンドウに表示するローカル画面（127.0.0.1限定）、Keychainへのキー保存、`.app` 生成 |
 | `github.py` | Issue取得、マーカー付きBotコメント更新 |
 | `slack.py` | Socket Mode、利用者/リポジトリ認可、即時ack、再送抑制 |
 | `action.py` / `action.yml` | GitHub ActionとSummary・出力ファイル |
@@ -46,7 +48,9 @@ JSONの主なフィールド:
 | `policy_version`, `policy` | 選定ルールの版と方針 |
 | `selection_objective` | 実際にJevへ渡した当該モードの目的 |
 | `catalog_version`, `catalog_verified_at` | 使用した候補集合の版と公式仕様の確認日 |
-| `created_at`, `input_sha256` | 実行時刻と入力の識別用ハッシュ |
+| `created_at`, `input_sha256` | 実行時刻と入力の識別用ハッシュ（リポジトリ指定時はそのメタデータも含む） |
+| `missing_context` | Jevが不足と判断した情報の種類（`goal` / `current_state` / `target` / `completion`）。1回目の評価と同じ呼び出しで判定。保留するのは `goal` が不足のとき（または不足項目の特定なしに情報不足と判定されたとき）だけ。それ以外の不足は暫定選定に進み、2回目の評価にも渡す |
+| `repository` | リポジトリ指定時のみ。Jevへ送信したメタデータそのもの |
 | `assessment` | 評価軸ごとの選択、全確率分布、confidence |
 | `recommendations` | 各社のモデル、推論設定、API設定抜粋、判断、出典 |
 | `jev_calls` | 実際に評価したJevのモデル名と各呼び出しのusage |
@@ -54,7 +58,9 @@ JSONの主なフィールド:
 | `warnings` | 未校正、利用面の違い、カタログ確認期限など |
 
 `api_parameters` は設定の抜粋です。入力・max_tokens等を含む完全なリクエストではありません。
-`value` / `total-cost` の選定済み候補には `policy_guidance` を追加します。
+`value` / `total-cost` / `min-cost` / `max-quality` の選定済み候補には `policy_guidance` を追加します。
+`min-cost` / `max-quality` では各候補の説明にカタログ内の順位を付け、`max-quality` では候補を各社の最上位モデルに限定します。
+そのためカタログは、各社のモデルを安い順（最後が最も高性能）に並べてください。
 `recommendation_scope` は初回試行か検証済み完了か、`cost_basis` は定性判断であることを示し、
 次の行動・再評価の目安も含みます。情報不足で保留した候補には実行の助言を付けません。
 

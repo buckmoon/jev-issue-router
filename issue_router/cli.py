@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 from .core import RouterError, normalize_issue, route, render
 from .github import fetch_issue
+from .repo import snapshot
 from .settings import add_routing_arguments, routing_options
 
 
@@ -15,6 +16,8 @@ def main(argv=None):
     source.add_argument("--file", help="Issue JSON {title, body, context}; '-' reads stdin")
     source.add_argument("--text", help="Plain Issue text; '-' reads stdin")
     parser.add_argument("--context", help="Explicit UTF-8 context file to send to Jev")
+    parser.add_argument("--repo", metavar="PATH", help="Local Git clone; sends its metadata (structure, tests, CI, "
+                        "Git state, matching paths) to Jev. File contents are not read")
     add_routing_arguments(parser)
     parser.add_argument("--format", choices=["text", "json", "slack"], default="text")
     parser.add_argument("--output", help="Write result to a UTF-8 file instead of stdout")
@@ -32,6 +35,8 @@ def main(argv=None):
         issue = normalize_issue(issue)
         if args.context:
             issue["context"] = Path(args.context).read_text(encoding="utf-8")
+        if args.repo:
+            options["repository"] = snapshot(args.repo, "\n".join(issue.values()))
         result = route(issue, **options)
         output = json.dumps(result, ensure_ascii=False, indent=2) if args.format == "json" else render(result, args.format == "slack")
         if args.output:

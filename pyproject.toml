@@ -23,6 +23,7 @@ Documentation = "https://github.com/buckmoon/jev-issue-router#readme"
 [project.scripts]
 issue-model = "issue_router.cli:main"
 issue-model-slack = "issue_router.slack:main"
+issue-model-app = "issue_router.app:main"
 
 [tool.setuptools.package-data]
 issue_router = ["catalog.json"]

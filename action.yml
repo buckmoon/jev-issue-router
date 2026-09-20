@@ -14,7 +14,7 @@ inputs:
     description: GitHub token with Issues read (and write when posting) permission
     default: ${{ github.token }}
   policy:
-    description: balanced, quality, cost, value (cheap first attempt) or total-cost (including rework)
+    description: balanced, quality, cost, value (cheap first attempt), total-cost (including rework), min-cost (lowest spend) or max-quality (top model, design quality first)
     default: balanced
   jev-model:
     description: Jev evaluator model ID

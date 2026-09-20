@@ -20,9 +20,11 @@ For a pasted Issue or a task in the conversation, send an object with `title`, `
 Default to `balanced`; use `--policy quality` or `--policy cost` when requested. For コスパ / cost-performance, choose the requested objective:
 
 - `--policy value`: an economical first attempt; accept some rework and later escalation instead of requiring reliable completion in one pass.
+- `--policy min-cost`: lowest model spend above all else; accepts retries and partial results. Use only when the user asks to minimize cost outright.
+- `--policy max-quality`: design quality above all else, ignoring cost; the model is fixed to each provider's most capable and Jev selects only the effort. Say so when presenting the result.
 - `--policy total-cost`: minimize resources to verified completion, including retries, human review and rework time; a stronger initial model can be better value.
 
-If a cost-performance request does not specify which approach, ask which one or evaluate both when the user requests a comparison. These modes use qualitative judgments, not measured prices or savings. Present `policy_guidance` and its reevaluation trigger; no automatic model switching occurs. `--context` accepts an explicit relevant context file. URL mode reads only the Issue title and body, not its comments or repository code.
+If a cost-performance request does not specify which approach, ask which one or evaluate both when the user requests a comparison. These modes use qualitative judgments, not measured prices or savings. Present `policy_guidance` and its reevaluation trigger; no automatic model switching occurs. `--context` accepts an explicit relevant context file. When the task targets a local Git checkout the user is working in, add `--repo PATH` so repository metadata (structure, tests, CI, Git state, paths matching issue terms; never file contents) informs the judgment; path names and commit subjects are sent to Jev, so skip it if the user has said the repository must not be shared. URL mode reads only the Issue title and body, not its comments or repository code.
 
 ## Present
 

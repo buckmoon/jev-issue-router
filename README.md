@@ -7,12 +7,14 @@
 | 使う場所 | 操作 | 結果 |
 | --- | --- | --- |
 | PCローカル | `issue-model ISSUE_URL` / JSON / テキスト | ターミナル、JSONファイル |
+| macOSアプリ | キー保存、タスク入力、結果表示の画面 | 画面に表示、コピー |
 | Slack | `/issue-model ISSUE_URL [policy]` | 実行した本人だけに返信 |
 | GitHub | 手動実行、またはラベル付与 | Job Summary、任意でIssueコメント更新 |
 
 ## 導入手順
 
 - **[ローカル](docs/local.md)** — インストール、Jev/GitHub認証、入力形式、方針設定、更新
+- **[macOSデスクトップアプリ](docs/desktop.md)** — インストール、キー保存、画面からの評価
 - **[Codex共通スキル](docs/local.md#他のcodexセッションから使う)** — `$jev-issue-router` を別プロジェクトのセッションでも利用
 - **[Slack](docs/slack.md)** — App登録、権限、Token、許可リスト、起動、常時運用
 - **[GitHub](docs/github.md)** — 共有Action、Secret設定、手動/ラベル実行、コメント、導入例
@@ -30,6 +32,17 @@ python3 -m venv .venv
 
 Python 3.10以降とJevのAPIキーが必要です。認証は `TYPESAFE_API_KEY` または既存のmacOS Keychain項目を使います。
 GitHub URLの評価には `gh` の認証も必要です。詳しくは[ローカル手順](docs/local.md)を参照してください。
+
+## macOSデスクトップアプリ
+
+上の手順でインストールした後、次を実行すると `~/Applications/Jev Issue Router.app` ができます。
+
+```sh
+.venv/bin/issue-model-app --install-mac-app
+```
+
+起動すると専用ウィンドウが開きます（ブラウザは使わず、このMac内だけで動作）。APIキーをKeychainに保存し、タスクやプロンプトを入力して「評価する」を押すと結果が表示されます。
+詳しくは[デスクトップアプリの手順](docs/desktop.md)を参照してください。
 
 ## GitHubリポジトリに導入
 
@@ -61,9 +74,20 @@ Slackの2つ目の引数、GitHub Actionの `policy`、Codexスキルからも�
 初回の完遂確実性より安い試行を優先するのが `value`、最初から上位モデルを使う費用も含め
 完了までの効率を判断するのが `total-cost` です。料金や節約額の実測・見積もりは行いません。
 既定の `balanced` と従来の `quality` / `cost` も引き続き利用できます。
+両端に振り切る方針として、コスト最優先の `min-cost` と、設計品質最優先（各社の最上位モデルに固定）の `max-quality` もあります。
+
+ローカルCLIとmacOSアプリでは、作業対象のリポジトリの状態も判断材料にできます。
+
+```sh
+issue-model ISSUE_URL --repo ~/dev/REPO
+```
+
+構成、テストやCIの有無、Gitの状態、Issueの語に一致するパスなどのメタデータだけを送信し、
+ファイルの中身は読みません。詳細は[ローカル手順](docs/local.md#リポジトリの状態を判断材料に加える)にあります。
 
 推薦するモデル・推論設定と、選択確率、confidence、次候補、選定に使った評価を表示します。
-情報が足りなければ保留します。API障害時に推薦を捏造しません。
+何をしたいのかが読み取れなければ保留し、何が不足かを表示します。対象や完了条件などが無いだけなら暫定で選定し、補足すべき情報を示します。
+API障害時に推薦を捏造しません。
 
 架空のIssueでJev実APIを呼び出した例:
 
@@ -77,9 +101,9 @@ Slackの2つ目の引数、GitHub Actionの `policy`、Codexスキルからも�
 
 ## 実装・検証の範囲
 
-- 共通エンジン、CLI、Socket Modeアダプタ、共有Actionを実装しています。
+- 共通エンジン、CLI、macOSデスクトップアプリ、Socket Modeアダプタ、共有Actionを実装しています。
 - 通常のCIはモックを使い、実API料金・Slack投稿・Issueコメントを発生させません。
-- 実行時にはIssueのタイトル・本文・明示したコンテキストをJevへ送信します。
+- 実行時にはIssueのタイトル・本文・明示したコンテキストをJevへ送信します。`--repo` 指定時はリポジトリのメタデータも送信します。
 - 推薦はAPIのモデルID・設定を基準にします。各製品UIの表示名や利用権限は別途確認が必要です。
 - Slack App登録と利用先リポジトリへのSecret設定は、導入先ごとに必要です。
 
