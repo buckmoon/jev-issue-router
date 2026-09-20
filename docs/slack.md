@@ -86,7 +86,7 @@ cd ~/dev/Github/jev-issue-router
 /issue-model https://github.com/buckmoon/project-a/issues/123 total-cost
 ```
 
-2つ目の引数は `balanced` / `quality` / `cost` / `value` / `total-cost` です。省略すると起動時の既定値になります。
+2つ目の引数は `balanced` / `quality` / `cost` / `value` / `total-cost` / `min-cost` / `max-quality` です。省略すると起動時の既定値になります。
 `value` は安い初回試行、`total-cost` は再試行・レビュー・手戻り込みの完了までのコストを優先します。
 コストは定性的な判断で、自動的なモデル切替は行いません。
 返信は呼び出した本人だけに表示されるephemeralメッセージです。

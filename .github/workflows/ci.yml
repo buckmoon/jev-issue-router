@@ -26,6 +26,7 @@ jobs:
         run: |
           issue-model --help
           issue-model-slack --help
+          issue-model-app --help
           python -c 'from issue_router.core import load_catalog; from slack_bolt import App; assert len(load_catalog()["models"]) == 8'
   workflows:
     runs-on: ubuntu-latest

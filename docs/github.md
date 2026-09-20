@@ -52,7 +52,7 @@ Issue読み取りには `issues: read`、コメント作成/更新には `issues
 UI操作:
 
 1. Actions → Recommend issue models → Run workflow
-2. Issue番号、方針（balanced/quality/cost/value/total-cost）、コメント有無を指定
+2. Issue番号、方針（balanced/quality/cost/value/total-cost/min-cost/max-quality）、コメント有無を指定
 3. 完了後、実行結果ページのSummaryを確認
 
 CLI操作:
@@ -96,7 +96,7 @@ Issue本文を編集しただけでは再評価しません。再評価は手動
 | `typesafe-api-key` | 必須 | Jev用Secret |
 | `repository` | 呼び出し元のrepo | `OWNER/REPO` |
 | `github-token` | `github.token` | 対象Issueを読めるToken |
-| `policy` | `balanced` | `balanced` / `quality` / `cost` / `value` / `total-cost` |
+| `policy` | `balanced` | `balanced` / `quality` / `cost` / `value` / `total-cost` / `min-cost` / `max-quality` |
 | `jev-model` | `jev-latest` | 評価に使うJevモデル |
 | `catalog` | 同梱カタログ | runner上のカタログ絶対パス |
 | `post-comment` | `false` | `true` の場合だけコメント作成/更新 |
