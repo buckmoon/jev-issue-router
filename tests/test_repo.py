@@ -114,6 +114,42 @@ class RoutingTests(unittest.TestCase):
         self.assertIn('暫定の選定です', text)
         self.assertIn(CONTEXT_HINTS['completion'], text)
 
+    def test_partial_and_all_abstained_results_are_reported_distinctly(self):
+        def abstaining(providers):
+            fake = FakeJev()
+
+            def call(request):
+                response = fake(request)
+                for provider in providers:
+                    if provider in response['answers']:
+                        answer = response['answers'][provider]
+                        answer['choice'] = 'needs_context'
+                        keys = [k for k in answer['probabilities'] if k != 'needs_context']
+                        spread = dict(zip(keys, (0.2, 0.15, 0.1, 0.05, 0.04, 0.03, 0.03)))
+                        shares = {k: spread.get(k, 0.0) for k in keys}
+                        answer['probabilities'] = shares | {'needs_context': round(1 - sum(shares.values()), 2)}
+                return response
+            return call
+
+        partial = route({'body': 'iOSアプリも作りたい'}, call=abstaining(['openai']))
+        self.assertEqual(partial['status'], 'partial')
+        text = render(partial)
+        self.assertIn('openai: 選定保留（Jevが候補を1つに絞れませんでした）', text)
+        self.assertIn('他社の結果は有効です', text)
+        candidates = partial['recommendations']['openai']['top_candidates']
+        self.assertEqual(len(candidates), 5)
+        self.assertEqual([c['probability'] for c in candidates], [0.2, 0.15, 0.1, 0.05, 0.04])
+        self.assertEqual((candidates[0]['model'], candidates[0]['effort']), ('gpt-5.6-luna', 'low'))
+        self.assertIn('1. gpt-5.6-luna / low (20%)', text)
+        self.assertIn('5. gpt-5.6-luna / max (4%)', text)
+        self.assertIn('推薦ではなく', text)
+        self.assertNotIn('model', partial['recommendations']['openai'])
+        self.assertNotIn('top_candidates', partial['recommendations']['claude'])
+        self.assertIn('claude: claude-', text)
+        nothing = route({'body': 'iOSアプリも作りたい'}, call=abstaining(['openai', 'claude', 'grok']))
+        self.assertEqual(nothing['status'], 'needs_context')
+        self.assertIn('選定保留（情報不足）', render(nothing))
+
     def test_oversized_or_invalid_snapshot_is_rejected(self):
         for repository in ({}, 'text', {'paths': ['x' * 61000]}):
             with self.assertRaises(RouterError):

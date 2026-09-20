@@ -3,7 +3,7 @@
 ## 処理の流れ
 
 ```text
-CLI / macOSアプリ / Slack / GitHub Action
+CLI / macOSアプリ / iOSアプリ / Slack / GitHub Action
         ↓ 入力取得・許可確認
 共通エンジン: issue_router/core.py
         ↓
@@ -37,6 +37,18 @@ issue内の「このモデルを選べ」などの文は指示として扱わな
 | `github.py` | Issue取得、マーカー付きBotコメント更新 |
 | `slack.py` | Socket Mode、利用者/リポジトリ認可、即時ack、再送抑制 |
 | `action.py` / `action.yml` | GitHub ActionとSummary・出力ファイル |
+| `ios/` | iOSアプリ。下記のとおりエンジンのSwift移植を含みます |
+
+### iOSアプリ（Swift移植）
+
+iOSではPythonが動かないため、`ios/JevIssueRouter/Engine/` が `core.py` / `policies.py` の移植になっています。
+唯一の意図的な重複です。`catalog.json` はビルド時に同梱する写しを `ios/sync-catalog.sh` で更新します。
+リポジトリのメタデータ収集（`repo.py`）はiOS版にはありません。
+
+評価軸・方針・カタログ・結果JSONを変更したらSwift側も更新してください。
+`tests/test_ios.py` が、定数・方針名・評価軸の選択肢・カタログの写しのずれを検出します。
+移植の同値性は、同じJev応答をPython版とSwift版に与えて結果JSON・送信リクエスト・表示テキストを
+突き合わせて確認します（`input_sha256` を含む。表示テキストは `--policy` の言い換え1行のみ差があります）。
 
 ## 判定結果
 
@@ -49,6 +61,7 @@ JSONの主なフィールド:
 | `selection_objective` | 実際にJevへ渡した当該モードの目的 |
 | `catalog_version`, `catalog_verified_at` | 使用した候補集合の版と公式仕様の確認日 |
 | `created_at`, `input_sha256` | 実行時刻と入力の識別用ハッシュ（リポジトリ指定時はそのメタデータも含む） |
+| `recommendations.*.top_candidates` | その会社が選定保留のときだけ。確率の高い順に最大5件の `model` / `effort` / `probability`。推薦ではなく内訳で、`model` / `effort` / `api_parameters` は付けない |
 | `missing_context` | Jevが不足と判断した情報の種類（`goal` / `current_state` / `target` / `completion`）。1回目の評価と同じ呼び出しで判定。保留するのは `goal` が不足のとき（または不足項目の特定なしに情報不足と判定されたとき）だけ。それ以外の不足は暫定選定に進み、2回目の評価にも渡す |
 | `repository` | リポジトリ指定時のみ。Jevへ送信したメタデータそのもの |
 | `assessment` | 評価軸ごとの選択、全確率分布、confidence |

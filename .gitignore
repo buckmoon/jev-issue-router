@@ -9,3 +9,6 @@ dist/
 result.json
 .ruff_cache/
 .DS_Store
+xcuserdata/
+*.xcuserdatad
+DerivedData/

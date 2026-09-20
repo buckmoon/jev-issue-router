@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | PCローカル | `issue-model ISSUE_URL` / JSON / テキスト | ターミナル、JSONファイル |
 | macOSアプリ | キー保存、タスク入力、結果表示の画面 | 画面に表示、コピー |
+| iPhone / iPad | 同じ画面操作をiOSネイティブアプリで | 画面に表示、コピー |
 | Slack | `/issue-model ISSUE_URL [policy]` | 実行した本人だけに返信 |
 | GitHub | 手動実行、またはラベル付与 | Job Summary、任意でIssueコメント更新 |
 
@@ -15,6 +16,7 @@
 
 - **[ローカル](docs/local.md)** — インストール、Jev/GitHub認証、入力形式、方針設定、更新
 - **[macOSデスクトップアプリ](docs/desktop.md)** — インストール、キー保存、画面からの評価
+- **[iOSネイティブアプリ](docs/ios.md)** — Xcodeでビルド、Keychainへのキー保存、画面からの評価
 - **[Codex共通スキル](docs/local.md#他のcodexセッションから使う)** — `$jev-issue-router` を別プロジェクトのセッションでも利用
 - **[Slack](docs/slack.md)** — App登録、権限、Token、許可リスト、起動、常時運用
 - **[GitHub](docs/github.md)** — 共有Action、Secret設定、手動/ラベル実行、コメント、導入例
@@ -43,6 +45,20 @@ GitHub URLの評価には `gh` の認証も必要です。詳しくは[ローカ
 
 起動すると専用ウィンドウが開きます（ブラウザは使わず、このMac内だけで動作）。APIキーをKeychainに保存し、タスクやプロンプトを入力して「評価する」を押すと結果が表示されます。
 詳しくは[デスクトップアプリの手順](docs/desktop.md)を参照してください。
+
+## iOSネイティブアプリ
+
+iPhone / iPadから同じ評価を行うSwiftUIアプリのソースを `ios/` に同梱しています。
+Pythonが動かない環境のため、`issue_router/core.py` の2段階評価をSwiftへ移植し、
+端末から直接Jev APIを呼びます（サーバもMacの常時起動も不要）。
+
+```sh
+open ios/JevIssueRouter.xcodeproj
+```
+
+スキーム `JevIssueRouter` をシミュレータか実機で実行します。APIキーはiOSのKeychainに保存し、
+GitHub Issue URLを読む場合はGitHubトークンも保存します。実機インストールには各自の署名が必要です。
+詳しくは[iOSアプリの手順](docs/ios.md)を参照してください。
 
 ## GitHubリポジトリに導入
 
@@ -102,6 +118,8 @@ API障害時に推薦を捏造しません。
 ## 実装・検証の範囲
 
 - 共通エンジン、CLI、macOSデスクトップアプリ、Socket Modeアダプタ、共有Actionを実装しています。
+- iOSアプリは同じ評価ロジックのSwift移植です。同じ入力・同じJev応答でPython版と結果JSON・送信リクエスト・
+  表示テキストが一致することをフェイク応答で確認し、シミュレータ向けビルドまで確認しています（実機・実APIは未検証）。
 - 通常のCIはモックを使い、実API料金・Slack投稿・Issueコメントを発生させません。
 - 実行時にはIssueのタイトル・本文・明示したコンテキストをJevへ送信します。`--repo` 指定時はリポジトリのメタデータも送信します。
 - 推薦はAPIのモデルID・設定を基準にします。各製品UIの表示名や利用権限は別途確認が必要です。

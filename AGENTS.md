@@ -2,6 +2,7 @@
 
 - Read README.md, then the relevant guide in docs/. Start with `git status --short`.
 - Keep recommendation logic in issue_router/core.py. CLI, Slack and Actions share that engine.
+- The iOS app in ios/ is a Swift port of that engine. Update ios/JevIssueRouter/Engine/ and ios/sync-catalog.sh whenever rubrics, policies, the catalog or the result JSON change, and keep tests/test_ios.py green.
 - Jev selects typed choices. Never fabricate recommendations or convert confidence into success probability.
 - Catalog model IDs, supported effort settings and source dates require official documentation evidence. Routing descriptions are hypotheses until calibrated.
 - Do not print keys, tokens, raw external error bodies or private Issue text in logs. Never add secrets to tests.
