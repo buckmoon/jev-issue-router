@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-18.1",
+  "version": "2026-09-23.1",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -140,6 +140,22 @@
       "sources": [
         "https://docs.x.ai/developers/models",
         "https://docs.x.ai/developers/model-capabilities/text/reasoning"
+      ]
+    },
+    {
+      "id": "claude-opus-5-5",
+      "provider": "claude",
+      "enabled": false,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "selection_guidance": "UNREVIEWED: listed by the claude models API (first seen 2026-09-23). Set efforts, guidance and cost order, then enable.",
+      "sources": [
+        "https://platform.claude.com/docs/en/models/overview"
       ]
     }
   ]
