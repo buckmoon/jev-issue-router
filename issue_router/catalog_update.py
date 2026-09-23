@@ -77,7 +77,6 @@ def listed(catalog_id, ids):
 
 def compare(catalog, watch, listings):
     """listings: {provider: [model entries]} for providers that were checked successfully."""
-    cutoff = dt.date.fromisoformat(catalog["verified_at"])
     known = {m["id"] for m in catalog["models"]} | set(watch.get("ignored", []))
     report = {}
     for provider, entries in listings.items():
@@ -90,9 +89,7 @@ def compare(catalog, watch, listings):
             day = created(entry)
             if (not include.search(model_id) or (exclude and exclude.search(model_id))
                     or SNAPSHOT.search(model_id) or model_id in known
-                    or not re.fullmatch(r"[A-Za-z0-9.-]+", model_id)
-                    # Models listed before the catalog was verified were already considered then.
-                    or (day is not None and day < cutoff)):
+                    or not re.fullmatch(r"[A-Za-z0-9.-]+", model_id)):
                 continue
             new.append({"id": model_id, "created": day.isoformat() if day else None})
         missing = [m["id"] for m in catalog["models"]
@@ -123,8 +120,23 @@ def apply(catalog, watch, report, today):
     return validate_catalog(catalog)
 
 
-def render_report(report, skipped, changed):
+def seed(watch, report):
+    """First run: record every currently listed candidate as ignored, for review, instead of proposing
+    the provider's whole back catalog as new models."""
+    watch = json.loads(json.dumps(watch))
+    ids = {n["id"] for r in report.values() for n in r["new"]}
+    watch["ignored"] = sorted(set(watch.get("ignored", [])) | ids)
+    watch["seeded"] = True
+    return watch
+
+
+def render_report(report, skipped, changed, seeded=False):
     lines = ["## モデルカタログの確認", ""]
+    if seeded:
+        lines += ["**初回の登録です。** 現在の一覧にあるカタログ外のモデルを `issue_router/model_watch.json` の "
+                  "`ignored` に登録しました（カタログは変更していません）。",
+                  "本当に採用すべきモデルが含まれていないか確認し、含まれていれば `ignored` から外してカタログに追加してください。"
+                  "以降の確認では、カタログにも `ignored` にも無いモデルをすべて新規として提案します。", ""]
     for provider in PROVIDERS:
         if provider in skipped:
             lines.append(f"- **{provider}**: 未確認（{skipped[provider]}）")
@@ -136,7 +148,9 @@ def render_report(report, skipped, changed):
             lines.append("  - 一覧に無い有効モデル: " + ", ".join(f"`{m}`" for m in result["missing"])
                          + "（廃止・アカウントの権限・一時的な欠落のいずれか。自動では無効化しません）")
     lines.append("")
-    if changed:
+    if seeded:
+        pass
+    elif changed:
         lines += ["新規モデルを **無効 (`enabled: false`)** でカタログに追加しました。Jevはまだ選びません。",
                   "",
                   "有効化する前に、公式資料で次を確認して編集してください:",
@@ -185,10 +199,18 @@ def main(argv=None, fetch=fetch_json, environ=None, today=None):
         print("No provider could be checked: " + "; ".join(f"{p}: {r}" for p, r in skipped.items()), file=sys.stderr)
         return 1
     report = compare(catalog, watch, listings)
-    updated = apply(catalog, watch, report, today) if args.write else None
+    seeding = args.write and not watch.get("seeded")
+    if seeding and skipped:
+        # A partial seed would later propose the skipped providers' whole back catalog.
+        print("First run needs every provider: " + "; ".join(f"{p}: {r}" for p, r in skipped.items()),
+              file=sys.stderr)
+        return 1
+    updated = None if seeding else apply(catalog, watch, report, today) if args.write else None
+    if seeding:
+        WATCH.write_text(json.dumps(seed(watch, report), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if updated:
         write_catalog(updated, [CATALOG, IOS_CATALOG])
-    text = render_report(report, skipped, bool(updated))
+    text = render_report(report, skipped, bool(updated), seeding)
     if args.summary:
         with open(args.summary, "a", encoding="utf-8") as handle:
             handle.write(text)

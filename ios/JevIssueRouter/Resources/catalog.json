@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-23.3",
+  "version": "2026-09-23.5",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -14,7 +14,7 @@
     {
       "id": "gpt-5.6-luna",
       "provider": "openai",
-      "enabled": true,
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -28,9 +28,26 @@
       ]
     },
     {
-      "id": "gpt-5.6-terra",
+      "id": "gpt-6-luna",
       "provider": "openai",
       "enabled": true,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "selection_guidance": "Most efficient current OpenAI candidate for focused, well-specified, easily verified work; lowest price in the OpenAI lineup.",
+      "sources": [
+        "https://developers.openai.com/api/docs/models",
+        "https://developers.openai.com/api/docs/pricing"
+      ]
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "provider": "openai",
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -46,7 +63,7 @@
     {
       "id": "gpt-5.6-sol",
       "provider": "openai",
-      "enabled": true,
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -57,6 +74,23 @@
       "selection_guidance": "Flagship candidate for complex professional coding and interacting components.",
       "sources": [
         "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+      ]
+    },
+    {
+      "id": "gpt-6-sol",
+      "provider": "openai",
+      "enabled": true,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "selection_guidance": "Balanced current OpenAI candidate for complex coding and agentic workflows; priced below GPT-5.6 Sol.",
+      "sources": [
+        "https://developers.openai.com/api/docs/models",
+        "https://developers.openai.com/api/docs/pricing"
       ]
     },
     {
