@@ -143,6 +143,14 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(info['CFBundleIdentifier'], app.BUNDLE_ID)
         self.assertTrue(info['NSAppTransportSecurity']['NSAllowsLocalNetworking'])
 
+    def test_window_mode_never_idles_out(self):
+        with patch('issue_router.app.process_alive', return_value=True):
+            self.assertTrue(app.keep_running(0, 123, now=app.IDLE_SECONDS * 100))
+        with patch('issue_router.app.process_alive', return_value=False):
+            self.assertFalse(app.keep_running(0, 123, now=1))
+        self.assertTrue(app.keep_running(0, None, now=app.IDLE_SECONDS - 1))
+        self.assertFalse(app.keep_running(0, None, now=app.IDLE_SECONDS + 1))
+
     def test_server_follows_the_window_process(self):
         self.assertTrue(app.process_alive(None))
         self.assertTrue(app.process_alive(os.getpid()))
