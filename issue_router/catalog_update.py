@@ -16,9 +16,11 @@ import urllib.request
 from .core import NoRedirect, PROVIDERS, RouterError, validate_catalog
 
 PACKAGE = Path(__file__).resolve().parent
-CATALOG = PACKAGE / "catalog.json"
-WATCH = PACKAGE / "model_watch.json"
-IOS_CATALOG = PACKAGE.parent / "ios" / "JevIssueRouter" / "Resources" / "catalog.json"
+# Edit the checkout in the working directory, not an installed copy of the package (pip install .).
+ROOT = Path.cwd() if (Path.cwd() / "issue_router" / "catalog.json").is_file() else PACKAGE.parent
+CATALOG = ROOT / "issue_router" / "catalog.json"
+WATCH = ROOT / "issue_router" / "model_watch.json"
+IOS_CATALOG = ROOT / "ios" / "JevIssueRouter" / "Resources" / "catalog.json"
 UNREVIEWED = "UNREVIEWED"
 # Dated snapshots (gpt-x-2026-01-02, claude-x-20260102, gpt-4-0613) duplicate their alias.
 SNAPSHOT = re.compile(r"-(\d{4}-\d{2}-\d{2}|\d{8}|\d{4})$")

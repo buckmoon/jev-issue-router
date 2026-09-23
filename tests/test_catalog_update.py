@@ -98,6 +98,11 @@ class CompareTests(unittest.TestCase):
 
 
 class MainTests(unittest.TestCase):
+    def test_default_paths_are_the_checkout_not_the_installed_package(self):
+        repo = Path(__file__).resolve().parent.parent
+        self.assertEqual(cu.CATALOG, repo / 'issue_router' / 'catalog.json')
+        self.assertEqual(cu.IOS_CATALOG, repo / 'ios' / 'JevIssueRouter' / 'Resources' / 'catalog.json')
+
     def run_main(self, argv, fetch, environ):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
