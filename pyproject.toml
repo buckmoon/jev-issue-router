@@ -24,9 +24,10 @@ Documentation = "https://github.com/buckmoon/jev-issue-router#readme"
 issue-model = "issue_router.cli:main"
 issue-model-slack = "issue_router.slack:main"
 issue-model-app = "issue_router.app:main"
+issue-model-catalog = "issue_router.catalog_update:main"
 
 [tool.setuptools.package-data]
-issue_router = ["catalog.json"]
+issue_router = ["catalog.json", "model_watch.json"]
 
 [tool.setuptools.packages.find]
 include = ["issue_router*"]
