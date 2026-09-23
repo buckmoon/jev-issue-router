@@ -8,7 +8,7 @@ from issue_router import catalog_update as cu
 from issue_router.core import RouterError, load_catalog, route, validate_catalog
 from test_router import FakeJev
 
-WATCH = json.loads(cu.WATCH.read_text(encoding='utf-8'))
+WATCH = dict(json.loads(cu.WATCH.read_text(encoding='utf-8')), seeded=True, ignored=['gpt-4o'])
 LATER = 1893456000  # 2030-01-01, after any catalog verification date
 EARLIER = 1577836800  # 2020-01-01
 
@@ -43,9 +43,12 @@ KEYS = {'OPENAI_API_KEY': 'sk-test', 'ANTHROPIC_API_KEY': 'ak-test', 'XAI_API_KE
 
 
 class CompareTests(unittest.TestCase):
-    def test_only_new_text_models_after_verification_are_proposed(self):
+    def test_new_text_models_are_proposed_regardless_of_creation_date(self):
         report = cu.compare(load_catalog(), WATCH, listing())
         self.assertEqual([n['id'] for n in report['openai']['new']], ['gpt-7-nova'])
+        lists = listing()
+        lists['openai'].append({'id': 'gpt-6-old-but-unlisted', 'created': EARLIER})
+        self.assertIn('gpt-6-old-but-unlisted', [n['id'] for n in cu.compare(load_catalog(), WATCH, lists)['openai']['new']])
         self.assertEqual([n['id'] for n in report['claude']['new']], ['claude-opus-6'])
         self.assertEqual(report['grok']['new'], [])
         # Dated Anthropic snapshots count as their alias being listed.
@@ -60,7 +63,7 @@ class CompareTests(unittest.TestCase):
         self.assertTrue(next(m for m in updated['models'] if m['id'] == 'grok-4.6')['enabled'])
 
     def test_ignored_ids_are_not_proposed(self):
-        watch = dict(WATCH, ignored=['gpt-7-nova'])
+        watch = dict(WATCH, ignored=['gpt-4o', 'gpt-7-nova'])
         self.assertEqual(cu.compare(load_catalog(), watch, listing())['openai']['new'], [])
 
     def test_apply_adds_disabled_placeholders_that_routing_never_offers(self):
@@ -103,9 +106,12 @@ class MainTests(unittest.TestCase):
         self.assertEqual(cu.CATALOG, repo / 'issue_router' / 'catalog.json')
         self.assertEqual(cu.IOS_CATALOG, repo / 'ios' / 'JevIssueRouter' / 'Resources' / 'catalog.json')
 
-    def run_main(self, argv, fetch, environ):
+    def run_main(self, argv, fetch, environ, watch=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            watch_path = root / 'model_watch.json'
+            watch_path.write_text(json.dumps(WATCH if watch is None else watch), encoding='utf-8')
+            self.watch_after = watch_path
             catalog, ios = root / 'catalog.json', root / 'ios' / 'catalog.json'
             ios.parent.mkdir()
             original = cu.CATALOG.read_text(encoding='utf-8')
@@ -113,8 +119,10 @@ class MainTests(unittest.TestCase):
             ios.write_text(original, encoding='utf-8')
             summary = root / 'summary.md'
             with patch.object(cu, 'CATALOG', catalog), patch.object(cu, 'IOS_CATALOG', ios), \
+                    patch.object(cu, 'WATCH', watch_path), \
                     patch('builtins.print') as printed:
                 code = cu.main([*argv, '--summary', str(summary)], fetch=fetch, environ=environ, today='2030-01-03')
+            self.watch_result = json.loads(watch_path.read_text())
             return code, json.loads(catalog.read_text()), json.loads(ios.read_text()), \
                 summary.read_text() if summary.exists() else '', printed
 
@@ -141,6 +149,18 @@ class MainTests(unittest.TestCase):
         output = summary + ' '.join(str(c) for c in printed.call_args_list)
         for key in ('sk-test', 'ak-test'):
             self.assertNotIn(key, output)
+
+    def test_first_run_seeds_ignored_for_review_instead_of_proposing_the_back_catalog(self):
+        unseeded = {k: v for k, v in WATCH.items() if k != 'seeded'} | {'ignored': []}
+        code, engine, _, summary, _ = self.run_main(['--write'], FakeProviders(listing()), KEYS, unseeded)
+        self.assertEqual(code, 0)
+        self.assertEqual(engine, load_catalog())
+        self.assertTrue(self.watch_result['seeded'])
+        self.assertEqual(self.watch_result['ignored'], ['claude-opus-6', 'gpt-4o', 'gpt-7-nova'])
+        self.assertIn('初回の登録', summary)
+        code, *_ = self.run_main(['--write'], FakeProviders(listing()), {'OPENAI_API_KEY': 'k'}, unseeded)
+        self.assertEqual(code, 1)
+        self.assertNotIn('seeded', self.watch_result)
 
     def test_no_keys_is_an_error(self):
         code, *_ = self.run_main(['--write'], FakeProviders(listing()), {})

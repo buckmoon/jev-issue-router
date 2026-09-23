@@ -139,9 +139,9 @@ class RoutingTests(unittest.TestCase):
         candidates = partial['recommendations']['openai']['top_candidates']
         self.assertEqual(len(candidates), 5)
         self.assertEqual([c['probability'] for c in candidates], [0.2, 0.15, 0.1, 0.05, 0.04])
-        self.assertEqual((candidates[0]['model'], candidates[0]['effort']), ('gpt-5.6-luna', 'low'))
-        self.assertIn('1. gpt-5.6-luna / low (20%)', text)
-        self.assertIn('5. gpt-5.6-luna / max (4%)', text)
+        self.assertEqual((candidates[0]['model'], candidates[0]['effort']), ('gpt-6-luna', 'low'))
+        self.assertIn('1. gpt-6-luna / low (20%)', text)
+        self.assertIn('5. gpt-6-luna / max (4%)', text)
         self.assertIn('推薦ではなく', text)
         self.assertNotIn('model', partial['recommendations']['openai'])
         self.assertNotIn('top_candidates', partial['recommendations']['claude'])

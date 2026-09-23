@@ -114,7 +114,7 @@ class EconomicPolicyTests(unittest.TestCase):
         self.assertIn(f"model 1 of {len(openai)}", criteria[openai[0]['id'] + '__low'])
         fake = FakeJev()
         route(self.issue, policy='balanced', call=fake)
-        self.assertNotIn('Catalog position', fake.requests[1]['questions']['openai']['criteria']['gpt-5.6-luna__low'])
+        self.assertNotIn('Catalog position', fake.requests[1]['questions']['openai']['criteria'][openai[0]['id'] + '__low'])
         self.assertIn('定性的', render(route(self.issue, policy='min-cost', call=FakeJev())))
         self.assertNotIn('コストは定性的', render(route(self.issue, policy='max-quality', call=FakeJev())))
         self.assertNotEqual(questions['min-cost'], questions['max-quality'])
