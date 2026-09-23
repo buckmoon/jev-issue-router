@@ -27,7 +27,7 @@ jobs:
           issue-model --help
           issue-model-slack --help
           issue-model-app --help
-          python -c 'from issue_router.core import load_catalog; from slack_bolt import App; assert len(load_catalog()["models"]) == 8'
+          python -c 'import json, os; from issue_router.core import load_catalog; from slack_bolt import App; assert load_catalog() == json.load(open(os.environ["GITHUB_WORKSPACE"] + "/issue_router/catalog.json"))'
   workflows:
     runs-on: ubuntu-latest
     steps:
