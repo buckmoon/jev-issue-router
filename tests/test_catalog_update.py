@@ -58,9 +58,9 @@ class CompareTests(unittest.TestCase):
         lists = listing()
         lists['grok'] = []
         report = cu.compare(load_catalog(), WATCH, lists)
-        self.assertEqual(report['grok']['missing'], ['grok-4.6'])
+        self.assertEqual(report['grok']['missing'], ['grok-4.7'])
         updated = cu.apply(load_catalog(), WATCH, report, '2030-01-03')
-        self.assertTrue(next(m for m in updated['models'] if m['id'] == 'grok-4.6')['enabled'])
+        self.assertTrue(next(m for m in updated['models'] if m['id'] == 'grok-4.7')['enabled'])
 
     def test_ignored_ids_are_not_proposed(self):
         watch = dict(WATCH, ignored=['gpt-4o', 'gpt-7-nova'])

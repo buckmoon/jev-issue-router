@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-23.5",
+  "version": "2026-09-23.7",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -181,7 +181,7 @@
     {
       "id": "grok-4.6",
       "provider": "grok",
-      "enabled": true,
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -191,6 +191,22 @@
       "selection_guidance": "Current flagship Grok coding candidate; tune effort to task difficulty. Only Grok model in the initial catalog, per current official general coding guidance.",
       "sources": [
         "https://docs.x.ai/developers/models",
+        "https://docs.x.ai/developers/model-capabilities/text/reasoning"
+      ]
+    },
+    {
+      "id": "grok-4.7",
+      "provider": "grok",
+      "enabled": true,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "selection_guidance": "Current flagship Grok coding candidate, recommended by xAI for code and all general use; tune effort to task difficulty (default high).",
+      "sources": [
+        "https://docs.x.ai/docs/models",
         "https://docs.x.ai/developers/model-capabilities/text/reasoning"
       ]
     }
