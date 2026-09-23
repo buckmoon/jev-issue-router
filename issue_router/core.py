@@ -141,6 +141,8 @@ def validate_catalog(catalog):
                 or not model["sources"] or any(not isinstance(s, str) or not s.startswith("https://") for s in model["sources"])
                 or type(model.get("enabled", True)) is not bool):
             raise RouterError("Invalid model guidance, sources or enabled flag")
+        if model.get("enabled", True) and model["selection_guidance"].startswith("UNREVIEWED"):
+            raise RouterError("Review a watcher-added model's efforts and guidance before enabling it")
     for provider in PROVIDERS:
         count = sum(len(m["efforts"]) for m in catalog["models"]
                     if m["provider"] == provider and m.get("enabled", True))

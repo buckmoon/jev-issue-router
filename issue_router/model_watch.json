@@ -1,0 +1,21 @@
+{
+  "comment": "Which provider model IDs the catalog watcher reports. Add rejected IDs to ignored so they are not proposed again.",
+  "providers": {
+    "openai": {
+      "include": "^(gpt-|o[0-9])",
+      "exclude": "(audio|realtime|tts|transcribe|image|embedding|search|moderation|instruct)",
+      "docs": "https://platform.openai.com/docs/models"
+    },
+    "claude": {
+      "include": "^claude-",
+      "exclude": "",
+      "docs": "https://platform.claude.com/docs/en/models/overview"
+    },
+    "grok": {
+      "include": "^grok-",
+      "exclude": "(image|imagine|vision|video)",
+      "docs": "https://docs.x.ai/docs/models"
+    }
+  },
+  "ignored": []
+}

@@ -337,26 +337,32 @@ APPLET = """ObjC.import('Cocoa');
 ObjC.import('WebKit');
 var app = Application.currentApplication();
 app.includeStandardAdditions = true;
-var win = null, pid = '';
-function run() {
+var win = null, web = null, pid = '', url = '', ticks = 0, failures = 0;
+function startServer() {
   var dir = app.doShellScript('mktemp -d');
   var me = $.NSProcessInfo.processInfo.processIdentifier;
   pid = app.doShellScript(__COMMAND__ + ' --no-browser --url-file ' + dir + '/url --window-pid ' + me +
                           ' >/dev/null 2>&1 & echo $!');
-  var url = '';
+  url = '';
   for (var i = 0; i < 150 && !url; i++) {
     delay(0.1);
     try { url = app.doShellScript('cat ' + dir + '/url'); } catch (e) {}
   }
-  if (!url) {
+  return url;
+}
+function load() {
+  web.loadRequest($.NSURLRequest.requestWithURL($.NSURL.URLWithString(url)));
+}
+function run() {
+  if (!startServer()) {
     app.displayAlert('Jev Issue Router', {message: '起動に失敗しました。ターミナルで issue-model-app を実行して確認してください。'});
     app.quit();
     return;
   }
   var rect = $.NSMakeRect(0, 0, 880, 860);
   win = $.NSWindow.alloc.initWithContentRectStyleMaskBackingDefer(rect, 15, 2, false);
-  var web = $.WKWebView.alloc.initWithFrameConfiguration(rect, $.WKWebViewConfiguration.alloc.init);
-  web.loadRequest($.NSURLRequest.requestWithURL($.NSURL.URLWithString(url)));
+  web = $.WKWebView.alloc.initWithFrameConfiguration(rect, $.WKWebViewConfiguration.alloc.init);
+  load();
   win.setContentView(web);
   win.setTitle($('Jev Issue Router'));
   win.setReleasedWhenClosed(false);
@@ -365,7 +371,13 @@ function run() {
   $.NSApp.activateIgnoringOtherApps(true);
 }
 function idle() {
-  if (win && !win.isVisible) app.quit();
+  if (win && !win.isVisible) { app.quit(); return 1; }
+  // Every 10 s, make sure the local server still answers; restart it and reload if it is gone.
+  if (win && ++ticks % 10 == 0) {
+    try { app.doShellScript('/usr/bin/curl -s -o /dev/null --max-time 3 ' + url); failures = 0; }
+    catch (e) { failures++; }
+    if (failures >= 2) { failures = 0; if (startServer()) load(); }
+  }
   return 1;
 }
 function quit() {
@@ -424,6 +436,14 @@ def process_alive(pid):
     return True
 
 
+def keep_running(last_seen, window_pid, now=None):
+    """The app window owns the server's lifetime. macOS pauses the page's timers while the window is
+    hidden, so its pings stop; the idle limit therefore applies only to the browser mode."""
+    if window_pid:
+        return process_alive(window_pid)
+    return (time.monotonic() if now is None else now) - last_seen < IDLE_SECONDS
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Local desktop app for Jev Issue Router")
     parser.add_argument("--install-mac-app", action="store_true",
@@ -451,7 +471,7 @@ def main(argv=None):
     if not args.no_browser:
         webbrowser.open(url)
     try:
-        while time.monotonic() - state["seen"] < IDLE_SECONDS and process_alive(args.window_pid):
+        while keep_running(state["seen"], args.window_pid):
             time.sleep(1)
     except KeyboardInterrupt:
         pass

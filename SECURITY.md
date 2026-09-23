@@ -25,6 +25,8 @@ With `--repo` (or a repository folder in the macOS app) it also sends repository
 file counts, path names, branch name and recent commit subjects. File contents are not read.
 Use only data you are authorized to send. Keep API keys in environment variables,
 GitHub Actions Secrets, or the supported macOS Keychain entry; never commit them.
+The optional model watcher reads provider model lists with `OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY` and `XAI_API_KEY`; it never sends Issue text to those providers.
 If a real credential leaks, revoke or rotate it at its issuer first. Deleting the
 file or Git history alone does not invalidate the credential.
 
