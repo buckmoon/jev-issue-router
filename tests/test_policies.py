@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from issue_router import action, cli
-from issue_router.core import render, route
+from issue_router.core import load_catalog, render, route
 from issue_router.settings import add_routing_arguments, routing_options
 from issue_router.slack import parse_command
 from test_router import FakeJev
@@ -110,7 +110,8 @@ class EconomicPolicyTests(unittest.TestCase):
         fake = FakeJev()
         route(self.issue, policy='min-cost', call=fake)
         criteria = fake.requests[1]['questions']['openai']['criteria']
-        self.assertIn('model 1 of 4', criteria['gpt-5.6-luna__low'])
+        openai = [m for m in load_catalog()['models'] if m['provider'] == 'openai' and m.get('enabled', True)]
+        self.assertIn(f"model 1 of {len(openai)}", criteria[openai[0]['id'] + '__low'])
         fake = FakeJev()
         route(self.issue, policy='balanced', call=fake)
         self.assertNotIn('Catalog position', fake.requests[1]['questions']['openai']['criteria']['gpt-5.6-luna__low'])
