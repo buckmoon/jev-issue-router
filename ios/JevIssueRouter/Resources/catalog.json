@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-28.1",
+  "version": "2026-09-29.1",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -112,7 +112,7 @@
     {
       "id": "claude-sonnet-5",
       "provider": "claude",
-      "enabled": true,
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -124,6 +124,25 @@
       "sources": [
         "https://platform.claude.com/docs/en/models/overview",
         "https://platform.claude.com/docs/en/build-with-claude/effort"
+      ]
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "provider": "claude",
+      "enabled": true,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "selection_guidance": "Fast balanced candidate for scoped coding and moderate debugging; replaces Claude Sonnet 5 at the same price. Effort levels are recalibrated from Sonnet 5: medium suits well-specified agentic coding, high harder or longer work.",
+      "sources": [
+        "https://platform.claude.com/docs/en/about-claude/models/overview",
+        "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+        "https://platform.claude.com/docs/en/build-with-claude/effort",
+        "https://platform.claude.com/docs/en/about-claude/pricing"
       ]
     },
     {
@@ -208,22 +227,6 @@
       "sources": [
         "https://docs.x.ai/docs/models",
         "https://docs.x.ai/developers/model-capabilities/text/reasoning"
-      ]
-    },
-    {
-      "id": "claude-sonnet-5-5",
-      "provider": "claude",
-      "enabled": false,
-      "efforts": [
-        "low",
-        "medium",
-        "high",
-        "xhigh",
-        "max"
-      ],
-      "selection_guidance": "UNREVIEWED: listed by the claude models API (first seen 2026-09-28). Set efforts, guidance and cost order, then enable.",
-      "sources": [
-        "https://platform.claude.com/docs/en/models/overview"
       ]
     }
   ]
