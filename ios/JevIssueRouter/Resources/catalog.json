@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-29.1",
+  "version": "2026-09-30.1",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -79,7 +79,7 @@
     {
       "id": "gpt-6-sol",
       "provider": "openai",
-      "enabled": true,
+      "enabled": false,
       "efforts": [
         "low",
         "medium",
@@ -92,6 +92,23 @@
         "https://developers.openai.com/api/docs/models",
         "https://developers.openai.com/api/docs/pricing"
       ]
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "provider": "openai",
+      "enabled": true,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "selection_guidance": "Balanced OpenAI candidate for complex coding, computer use, and professional work; near-Astra capability at lower cost according to official guidance. Prefer over GPT-6 Sol for this role; compare with Astra on representative tasks. Routing positioning is provisional, not benchmark-calibrated.",
+      "sources": [
+        "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
+      ],
+      "verified_at": "2026-09-30"
     },
     {
       "id": "gpt-6-astra",

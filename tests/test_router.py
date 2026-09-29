@@ -32,6 +32,30 @@ class FakeJev:
 
 
 class RouterTests(unittest.TestCase):
+    def test_sol_upgrade_is_offered_and_selected_with_api_parameters(self):
+        fake = FakeJev()
+
+        def choose_sol(request):
+            response = fake(request)
+            if 'openai' in request['questions']:
+                criteria = request['questions']['openai']['criteria']
+                self.assertFalse(any(k.startswith('gpt-6-sol__') for k in criteria))
+                self.assertEqual(
+                    {k.split('__')[1] for k in criteria if k.startswith('gpt-6.1-sol__')},
+                    {'low', 'medium', 'high', 'xhigh', 'max'},
+                )
+                choice = 'gpt-6.1-sol__high'
+                response['answers']['openai'].update(
+                    choice=choice, probabilities={k: float(k == choice) for k in criteria},
+                )
+            return response
+
+        result = route({'title': 'Debug stale updates', 'body': 'Reproduce and fix stale updates.'}, call=choose_sol)
+        recommendation = result['recommendations']['openai']
+        self.assertEqual(recommendation['model'], 'gpt-6.1-sol')
+        self.assertEqual(recommendation['api_parameters'],
+                         {'model': 'gpt-6.1-sol', 'reasoning': {'effort': 'high'}})
+
     def setUp(self):
         self.issue = {'title': 'Change button label', 'body': 'Save to Save changes; update UI test'}
 

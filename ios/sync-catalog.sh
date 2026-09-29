@@ -1,5 +1,6 @@
 #!/bin/sh
 # Copies the engine's model catalog into the iOS app bundle resources.
+# Sync model additions and per-model official verification dates without changing engine logic.
 # Run after editing issue_router/catalog.json; tests/test_ios.py fails while the copies differ.
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)

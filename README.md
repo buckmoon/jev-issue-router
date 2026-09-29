@@ -126,7 +126,7 @@ API障害時に推薦を捏造しません。
 - Slack App登録と利用先リポジトリへのSecret設定は、導入先ごとに必要です。
 
 新しいモデルは、各社のモデル一覧APIとの比較で1日4回検出し、無効な候補としてレビュー用PRを作ります（[手順](docs/architecture.md#新しいモデルを検出する)）。
-カタログの公式確認日は2026-09-18です。モデル別の出典は[catalog.json](issue_router/catalog.json)にあります。
+カタログ全体の公式確認日は2026-09-18です。GPT-6.1 Sol は2026-09-30に公式仕様を確認し、GPT-6 Sol の後継候補として追加しました。モデル別の出典は[catalog.json](issue_router/catalog.json)にあります。
 
 ## ライセンス
 

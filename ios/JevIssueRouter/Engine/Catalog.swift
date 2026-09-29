@@ -15,6 +15,7 @@ struct CatalogModel {
     let enabled: Bool
 }
 
+/// Model IDs and supported efforts are data-driven, including GPT-6.1 Sol.
 /// Mirrors `issue_router/core.py:validate_catalog`. The bundled file is a copy of the repository catalog.
 struct Catalog {
     static let providers = ["openai", "claude", "grok"]
