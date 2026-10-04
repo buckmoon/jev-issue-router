@@ -9,6 +9,8 @@ Run the shared local router for model selection. It uses the maintained catalog 
 
 ## Run
 
+Always use the launcher below. It fetches `issue_router/catalog.json` from the public repository main on every invocation, bypasses the bundled catalog and stops on fetch/validation failure without stale fallback. Report the resulting catalog version and verification date; latest published catalog does not mean every provider model was verified today. Do not pass `--catalog` or invoke the old private checkout directly.
+
 Resolve `scripts/route.py` relative to this skill's directory and invoke it with `python3` from the current working directory. The launcher follows its symlink to find the repository and its virtual environment; no PATH modification is needed.
 
 ```sh
