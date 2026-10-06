@@ -22,11 +22,11 @@ def add_routing_arguments(parser):
                         help="Local System One server (loopback http or https)")
 
 
-def routing_options(args):
+def routing_options(args, environ=None):
     if args.policy not in POLICIES:
         raise RouterError("ISSUE_MODEL_POLICY must be one of: " + ", ".join(POLICIES))
     # Non-secret settings are validated here; credentials are read on the first API call.
     evaluator = make_evaluator(args.evaluator, jev_model=args.jev_model, clef_host=args.clef_host,
                                clef_model=args.clef_model, clef_assess_model=args.clef_assess_model,
-                               clef_url=args.clef_url)
+                               clef_url=args.clef_url, environ=environ)
     return {"catalog": load_catalog(args.catalog), "policy": args.policy, "evaluator": evaluator}

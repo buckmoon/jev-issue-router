@@ -3,13 +3,14 @@
 ## 構成
 
 Slack Appを各ワークスペースに作成し、PCまたは常時稼働サーバーからSocket Modeで接続します。
-公開HTTPサーバー、受信用URL、受信ポートは不要です。SlackとGitHubとTypeSafeへの外向き通信が必要です。
+公開HTTPサーバー、受信用URL、受信ポートは不要です。SlackとGitHubと評価モデル（TypeSafe、またはCloudflare Workers AI）への外向き通信が必要です。
+Clefを手元のサーバーで動かす場合、評価モデルへの外向き通信は不要です。
 1プロセス・1ワークスペースの構成です。複数ワークスペースはAppとプロセスを分けます。
 OAuthで不特定多数のワークスペースへ配布するSaaS構成は含みません。
 
 ## 1. ローカル環境を準備する
 
-先に[ローカル手順](local.md)でJevとGitHubの認証を確認します。
+先に[ローカル手順](local.md)で評価モデル（Jev / Clef）とGitHubの認証を確認します。
 
 ```sh
 cd ~/dev/Github/jev-issue-router
@@ -63,7 +64,7 @@ export SLACK_BOT_TOKEN
 echo
 ```
 
-続けて同じターミナルで起動します。Jev認証はローカルCLIと共通です。
+続けて同じターミナルで起動します。評価モデルの認証（Jev / Clef）はローカルCLIと共通です。
 
 ```sh
 cd ~/dev/Github/jev-issue-router
@@ -75,6 +76,26 @@ cd ~/dev/Github/jev-issue-router
 ```sh
 .venv/bin/issue-model-slack --policy quality --catalog /absolute/path/catalog.json
 ```
+
+### 評価モデルにClefを使う
+
+評価モデルはプロセスの起動時に決まり、全員のコマンドに適用されます。Slackのコマンド引数では切り替えられません
+（利用者が課金先を変えられないようにするため）。切り替えるにはプロセスを再起動します。
+
+```sh
+# Cloudflare Workers AI（CLOUDFLARE_API_TOKEN は上と同じ方法で非表示入力してexport）
+export CLOUDFLARE_ACCOUNT_ID=<32桁の16進数のアカウントID>
+.venv/bin/issue-model-slack --evaluator clef
+# 応答待ちを短くする段階分け（評価段階 clef-flash → 選定段階 clef）
+.venv/bin/issue-model-slack --evaluator clef --clef-assess-model clef-flash
+# このPC内のOllama等（外部送信なし）
+.venv/bin/issue-model-slack --evaluator clef --clef-host local --clef-model clef-flash
+```
+
+アカウントIDやモデル名が正しくない場合は起動時にエラーで止まります。トークンは最初の評価時に読みます。
+Slackの対話利用では応答待ちが体験に直結するため、段階分けか高速（`--clef-model clef-flash`）が向いています
+（校正前の仮説です。[使い分け](local.md#clef-と-clef-flash-の使い分け)）。
+Clefの結果には「未校正」の警告が付き、最後の行に「評価モデル: Clef (...)」が表示されます。
 
 ## 5. Slackから実行する
 
@@ -93,7 +114,8 @@ cd ~/dev/Github/jev-issue-router
 OpenAI・Claude・Grokの推薦、推論設定、選択確率、次候補、評価軸が表示されます。
 結果をチャンネル全体へ共有する機能は初版に含みません。
 
-Issueのタイトル・本文はTypeSafeへ送信されます。Slack履歴は送信しません。
+Issueのタイトル・本文は起動時に選んだ評価モデル（TypeSafe、Cloudflare Workers AI、または指定したClefサーバー）へ送信されます。
+Slack履歴は送信しません。
 利用者/リポジトリの許可確認を済ませてからIssueを取得します。
 
 ## 運用
@@ -102,10 +124,10 @@ Issueのタイトル・本文はTypeSafeへ送信されます。Slack履歴は�
 - 同時評価は1件です。実行中の追加要求には再実行を案内します。
 - 同じSlack `trigger_id` の再送は5分間、最大256件のメモリ内履歴で抑制します。
   プロセス再起動をまたぐ重複抑制や永続キューはありません。
-- 日次課金上限は実装していません。利用者許可リストとTypeSafe側の利用管理を併用します。
+- 日次課金上限は実装していません。利用者許可リストと、TypeSafe・Cloudflare側の利用管理を併用します。
 - 更新後はプロセスを再起動してください。稼働中のカタログは起動時に読み込んだ内容です。
 - 常時運用する場合は同じコマンドをsystemd等で管理し、TokenはサービスのSecret管理から渡します。
-  macOS Keychainはログインセッション依存なので、ヘッドレスサーバーでは `TYPESAFE_API_KEY` を使います。
+  macOS Keychainはログインセッション依存なので、ヘッドレスサーバーでは `TYPESAFE_API_KEY` / `CLOUDFLARE_API_TOKEN` を使います。
 
 ## トラブル対応
 
@@ -116,6 +138,8 @@ Issueのタイトル・本文はTypeSafeへ送信されます。Slack履歴は�
 | 利用が許可されていない | `SLACK_ALLOWED_USERS` のメンバーID、Botの所属ワークスペース |
 | Repository is not allowed | `GITHUB_ALLOWED_REPOS` の完全な `OWNER/REPO` |
 | GitHub request failed | Bot実行環境の `gh auth status` / `GH_TOKEN` とrepo閲覧権限 |
+| 起動時に `Set CLOUDFLARE_ACCOUNT_ID` | `--evaluator clef` で `CLOUDFLARE_ACCOUNT_ID` が未設定か形式違い |
+| Clef HTTP 401/403、Clef network error | [ローカル手順のよくある問題](local.md#よくある問題)と同じ確認 |
 | 起動時のinvalid_auth等 | app tokenとbot tokenの取り違え、無効化・再生成の有無 |
 
 実ワークスペースへのApp作成・Token発行・コマンド応答確認は導入先ごとに必要です。

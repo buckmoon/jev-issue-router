@@ -78,6 +78,7 @@ class EconomicPolicyTests(unittest.TestCase):
             with self.subTest(policy=policy), tempfile.TemporaryDirectory() as directory:
                 env = {'GITHUB_REPOSITORY': 'o/r', 'ROUTER_ISSUE_NUMBER': '1',
                        'RUNNER_TEMP': directory, 'ISSUE_MODEL_POLICY': policy,
+                       'TYPESAFE_API_KEY': 'ts_example_not_a_real_key',
                        'GITHUB_STEP_SUMMARY': directory + '/summary',
                        'GITHUB_OUTPUT': directory + '/output'}
                 publish = Mock()

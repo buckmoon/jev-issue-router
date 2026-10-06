@@ -7,14 +7,15 @@
 標準の `ubuntu-latest` runnerには必要なPythonとGitHub CLIが用意されています。
 Self-hosted runnerではPython 3.11以降・`gh`・Bashを用意してください（CLI単体はPython 3.10以降）。
 
-実行するのはJevによる推薦だけです。コード変更・PR作成・推薦先モデルでの実装は行いません。
+実行するのは評価モデル（TypeSafeのJev、またはCloudflareのClef）による推薦だけです。
+コード変更・PR作成・推薦先モデルでの実装は行いません。
 
 ## 1. 共有Actionの利用を許可する
 
 公開後の `buckmoon/jev-issue-router` は、組織内外のpublic/privateリポジトリから参照できます。
 利用先リポジトリ/組織のActionsポリシーで、このActionの利用を許可してください。
 public Actionの取得には、提供側の組織内共有設定や専用の閲覧Tokenは不要です。
-対象Issueの読み取りとJev呼び出しには、次節の認証設定が必要です。
+対象Issueの読み取りと評価モデルの呼び出しには、次節の認証設定が必要です。
 
 ### 公開前またはprivateフォークで使う場合
 
@@ -30,15 +31,29 @@ public Actionの取得には、提供側の組織内共有設定や専用の閲�
 
 ## 2. 利用先にSecretを設定する
 
-利用先のSettings → Secrets and variables → ActionsでRepository Secret `TYPESAFE_API_KEY` を設定します。
-組織Secretとして対象リポジトリを限定して配布することもできます。
+利用先のSettings → Secrets and variables → Actionsで、使う評価モデルに応じて設定します。
+
+| 評価モデル | Secret | 変数（Variables） |
+| --- | --- | --- |
+| Jev（既定） | `TYPESAFE_API_KEY` | なし |
+| Clef（Cloudflare Workers AI） | `CLOUDFLARE_API_TOKEN`（Workers AI権限だけに絞ったトークン） | `CLOUDFLARE_ACCOUNT_ID`（32桁の16進数） |
+
+両方使う場合は両方を設定します。組織Secret・組織変数として対象リポジトリを限定して配布することもできます。
 この提供リポジトリにSecretを置くだけでは、別の利用先へ自動的に渡りません。
+アカウントIDは秘密ではないため変数で渡します。結果JSONやSummaryには出力しません。
 
 GitHub CLIを使う場合、次のコマンドでキーを非表示入力できます。
 
 ```sh
 gh secret set TYPESAFE_API_KEY --repo OWNER/REPO
+gh secret set CLOUDFLARE_API_TOKEN --repo OWNER/REPO
+gh variable set CLOUDFLARE_ACCOUNT_ID --repo OWNER/REPO --body 0123456789abcdef0123456789abcdef
 ```
+
+最後の行の値は例です。自分のアカウントIDに置き換えてください。
+選んだ評価モデルのSecretが未設定の場合、ActionはIssueを読む前に
+`CLOUDFLARE_API_TOKEN is required when evaluator is clef` のようなエラーで止まります。
+Workers AIへの送信はCloudflareの利用料が発生します（`clef` は入力100万トークンあたり$0.24、`clef-flash` は$0.09。2026-10時点の公表値）。
 
 OpenAI・Anthropic・xAIのキーは不要です。GitHub側の認証には通常の `GITHUB_TOKEN` を使います。
 Issue読み取りには `issues: read`、コメント作成/更新には `issues: write` が必要です。
@@ -52,14 +67,14 @@ Issue読み取りには `issues: read`、コメント作成/更新には `issues
 UI操作:
 
 1. Actions → Recommend issue models → Run workflow
-2. Issue番号、方針（balanced/quality/cost/value/total-cost/min-cost/max-quality）、コメント有無を指定
+2. Issue番号、方針（balanced/quality/cost/value/total-cost/min-cost/max-quality）、評価モデル（jev/clef）、コメント有無を指定
 3. 完了後、実行結果ページのSummaryを確認
 
 CLI操作:
 
 ```sh
 gh workflow run issue-model.yml --repo OWNER/REPO \
-  -f issue_number=123 -f policy=balanced -f post_comment=false
+  -f issue_number=123 -f policy=balanced -f evaluator=jev -f post_comment=false
 gh run list --repo OWNER/REPO --workflow issue-model.yml --limit 5
 ```
 
@@ -85,6 +100,14 @@ gh label create recommend-model --repo OWNER/REPO \
 
 対象Issueにラベルを付けると評価し、推薦コメントを作成/更新します。
 **このテンプレートはコメント投稿を有効にしています。**
+ラベルのイベントには入力が無いため、評価モデルはリポジトリ変数で選びます。
+`ISSUE_MODEL_EVALUATOR` を `clef` にするとClef（未設定なら `jev`）、`CLEF_MODEL` を `clef-flash` にすると
+多数のIssueを速く安く処理する高速構成になります（`clef-flash` は判定の質より速さ・料金を優先する仮説上の選択です）。
+
+```sh
+gh variable set ISSUE_MODEL_EVALUATOR --repo OWNER/REPO --body clef
+gh variable set CLEF_MODEL --repo OWNER/REPO --body clef-flash
+```
 Issue本文を編集しただけでは再評価しません。再評価は手動実行か、ラベルを外して付け直してください。
 提供リポジトリ自体ではラベル実行を有効にしていません。
 
@@ -93,16 +116,40 @@ Issue本文を編集しただけでは再評価しません。再評価は手動
 | 入力 | 既定値 | 内容 |
 | --- | --- | --- |
 | `issue-number` | 必須 | 正のIssue番号 |
-| `typesafe-api-key` | 必須 | Jev用Secret |
+| `typesafe-api-key` | `''` | Jev用Secret。`evaluator` が `jev` のとき必須（以前は常に必須） |
 | `repository` | 呼び出し元のrepo | `OWNER/REPO` |
 | `github-token` | `github.token` | 対象Issueを読めるToken |
 | `policy` | `balanced` | `balanced` / `quality` / `cost` / `value` / `total-cost` / `min-cost` / `max-quality` |
-| `jev-model` | `jev-latest` | 評価に使うJevモデル |
+| `evaluator` | `jev` | 評価モデル。`jev`（TypeSafe）/ `clef`（Cloudflare） |
+| `jev-model` | `jev-latest` | 評価に使うJevモデル（`jev` のとき） |
+| `clef-host` | `workers-ai` | `workers-ai` / `local`。`local` はSystem Oneサーバーを動かすself-hosted runner向け |
+| `clef-model` | `clef` | 選定段階のClefモデル。評価段階の既定にもなる。Workers AIは `clef` / `clef-flash` のみ |
+| `clef-assess-model` | `''` | 評価段階だけ別のClefモデルにする（空なら `clef-model` と同じ）。段階分けは `clef-flash` |
+| `clef-url` | `''` | `local` のときのSystem Oneサーバー（loopbackのhttpかhttps。空なら `http://127.0.0.1:11434/v1/systemone`） |
+| `cloudflare-account-id` | `''` | Workers AIのアカウントID。`clef` + `workers-ai` で必須。リポジトリ変数から渡す |
+| `cloudflare-api-token` | `''` | Workers AIのAPIトークン。`clef` + `workers-ai` で必須。Secretから渡す |
 | `catalog` | 同梱カタログ | runner上のカタログ絶対パス |
 | `post-comment` | `false` | `true` の場合だけコメント作成/更新 |
 
 `value` は安い初回試行、`total-cost` は手戻りやレビュー時間も含む完了までのコストを重視します。
 両者とも金額の見積もりではなく、定性的なモデル選定です。
+
+`clef-model` と `clef-assess-model` の組み合わせは[ローカル手順の使い分け](local.md#clef-と-clef-flash-の使い分け)を参照してください
+（精度優先 `clef` / `clef`、高速 `clef-flash` / `clef-flash`、段階分け `clef-flash` → `clef`）。
+Clefの判定は未校正で、結果に警告が付きます。JevとClefの間で自動フォールバックはしません。
+結果JSONの `evaluator` で、どの評価モデル・モデル名で判定したかを確認できます。
+
+Clefを使う例:
+
+```yaml
+- uses: buckmoon/jev-issue-router@main
+  with:
+    issue-number: ${{ inputs.issue_number }}
+    evaluator: clef
+    clef-assess-model: clef-flash   # 段階分け。省略すると両段階 clef
+    cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+```
 
 他リポジトリのIssueを `repository` で指定する場合、通常の `GITHUB_TOKEN` は範囲外です。
 別のGitHub App installation token等、対象を閲覧できるTokenを `github-token` へ渡してください。
@@ -155,7 +202,7 @@ JSON/Markdownはrunnerの一時ディレクトリへ保存されます。artifac
 テンプレートの `@main` は導入しやすい参照です。更新を管理したい場合は
 提供リポジトリのレビュー済みcommit SHA（40文字）へ置き換えてください。
 Actionのコード・同梱カタログは同じcommitに固定されます。
-Jev自体のモデルを固定するには `jev-model` も指定します。
+Jev自体のモデルを固定するには `jev-model` も指定します。Clefは `clef-model` / `clef-assess-model` で指定します。
 
 提供リポジトリの `.github/workflows/recommend.yml` は、自身のIssueに対する手動確認用です。
 自動CIとは別で、Secretと対象Issueが用意されている場合にだけ実行します。
@@ -165,7 +212,11 @@ Jev自体のモデルを固定するには `jev-model` も指定します。
 | 症状 | 確認すること |
 | --- | --- |
 | Action not found / repository not found | 提供元の公開状態、Actionsポリシー、参照SHA。privateの場合は組織内共有設定も確認 |
-| TYPESAFE_API_KEYがない | Secretは呼び出し元repo/組織側に設定されているか |
+| `TYPESAFE_API_KEY is required when evaluator is jev` | Secretは呼び出し元repo/組織側に設定されているか。workflowが `typesafe-api-key` を渡しているか |
+| `CLOUDFLARE_API_TOKEN is required when evaluator is clef` | Secret `CLOUDFLARE_API_TOKEN` と、workflowの `cloudflare-api-token` |
+| `Set CLOUDFLARE_ACCOUNT_ID` | 変数 `CLOUDFLARE_ACCOUNT_ID`（32桁の16進数）と、workflowの `cloudflare-account-id` |
+| Clef HTTP 401/403 | トークンの値、Workers AI権限、トークンとアカウントIDが同じアカウントのものか |
+| `Clef request failed (Cloudflare error codes [...])` | Workers AIが失敗を返した状態。数値コードだけを表示します |
 | Resource not accessible by integration | `issues` 権限、組織の上限、別repo用Tokenの有無 |
 | Invalid issue number | 正の整数だけを指定しているか |
 | 成功だが推薦保留 | `status` を確認しIssueの情報を追加 |

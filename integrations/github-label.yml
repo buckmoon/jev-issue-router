@@ -1,4 +1,6 @@
 # Optional. Applying the recommend-model label triggers evaluation AND a bot comment.
+# Label events carry no inputs: set the repository variable ISSUE_MODEL_EVALUATOR to clef to use Clef
+# (jev when unset), and CLEF_MODEL to clef-flash for faster, cheaper bulk runs.
 name: Recommend models on label
 on:
   issues:
@@ -19,4 +21,8 @@ jobs:
         with:
           issue-number: ${{ github.event.issue.number }}
           post-comment: 'true'
+          evaluator: ${{ vars.ISSUE_MODEL_EVALUATOR || 'jev' }}
+          clef-model: ${{ vars.CLEF_MODEL || 'clef' }}
           typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
