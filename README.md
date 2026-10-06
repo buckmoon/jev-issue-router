@@ -1,8 +1,8 @@
 # Jev Issue Router
 
-**Issueに適したモデルと推論設定を、JevがOpenAI・Claude・Grokそれぞれについて選びます。**
+**Issueに適したモデルと推論設定を、評価モデル（JevまたはClef）がOpenAI・Claude・Grokそれぞれについて選びます。**
 共通の評価エンジンを、ローカルCLI、Slackコマンド、GitHub Actionから利用できます。
-推薦先の3社APIは実行しません。評価処理はTypeSafeのホストAPIで行います。
+推薦先の3社APIは実行しません。評価処理はTypeSafeのJev、またはCloudflareのClef（Workers AIか手元のサーバー）で行います。
 
 | 使う場所 | 操作 | 結果 |
 | --- | --- | --- |
@@ -14,9 +14,9 @@
 
 ## 導入手順
 
-- **[ローカル](docs/local.md)** — インストール、Jev/GitHub認証、入力形式、方針設定、更新
-- **[macOSデスクトップアプリ](docs/desktop.md)** — インストール、キー保存、画面からの評価
-- **[iOSネイティブアプリ](docs/ios.md)** — Xcodeでビルド、Keychainへのキー保存、画面からの評価
+- **[ローカル](docs/local.md)** — インストール、評価モデル（Jev / Clef）とGitHubの認証、入力形式、方針設定、更新
+- **[macOSデスクトップアプリ](docs/desktop.md)** — インストール、評価モデルの選択とキー保存、画面からの評価
+- **[iOSネイティブアプリ](docs/ios.md)** — Xcodeでビルド、評価モデルの選択とKeychainへのキー保存、画面からの評価
 - **[Codex共通スキル](docs/local.md#他のcodexセッションから使う)** — `$jev-issue-router` を別プロジェクトのセッションでも利用
 - **[Slack](docs/slack.md)** — App登録、権限、Token、許可リスト、起動、常時運用
 - **[GitHub](docs/github.md)** — 共有Action、Secret設定、手動/ラベル実行、コメント、導入例
@@ -35,6 +35,29 @@ python3 -m venv .venv
 Python 3.10以降とJevのAPIキーが必要です。認証は `TYPESAFE_API_KEY` または既存のmacOS Keychain項目を使います。
 GitHub URLの評価には `gh` の認証も必要です。詳しくは[ローカル手順](docs/local.md)を参照してください。
 
+評価モデルをCloudflareのClefにする例（Workers AIへ送信し、Cloudflareの利用料が発生します）:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=<32桁の16進数のアカウントID>   # トークンは CLOUDFLARE_API_TOKEN を非表示入力で設定
+.venv/bin/issue-model --file examples/issue.json --evaluator clef
+```
+
+## 評価モデル
+
+Issueを判定するモデルを選べます。どちらにも同じ質問を `model` 以外同一の本文で送り、推薦対象のカタログは共通です。
+
+| 評価モデル | 指定 | 送信先 | 認証 |
+| --- | --- | --- | --- |
+| Jev（既定） | `--evaluator jev` | TypeSafe | `TYPESAFE_API_KEY` / Keychain `local.jev.typesafe` |
+| Clef（Workers AI） | `--evaluator clef` | Cloudflare Workers AI | `CLOUDFLARE_API_TOKEN` / Keychain `local.clef.cloudflare`、`CLOUDFLARE_ACCOUNT_ID` |
+| Clef（手元のサーバー） | `--evaluator clef --clef-host local` | Ollama等（既定は127.0.0.1。外部送信なし） | 不要（任意で `CLEF_API_KEY`） |
+
+Clefは `clef`（27B）と `clef-flash`（9B）を、評価段階と選定段階で使い分けられます
+（`--clef-model` / `--clef-assess-model`。[使い分け](docs/local.md#clef-と-clef-flash-の使い分け)）。
+評価軸・方針はJevで動作確認したもので、Clefでは未校正です。結果にその警告と、使った評価モデル（JSONの `evaluator`）が出ます。
+JevとClefの間で自動フォールバックはしません。macOSアプリ・iOSアプリでは画面で、Slackは起動引数で、GitHub Actionは `evaluator` 入力で選びます
+（iOSは手元のサーバーに非対応）。
+
 ## macOSデスクトップアプリ
 
 上の手順でインストールした後、次を実行すると `~/Applications/Jev Issue Router.app` ができます。
@@ -43,14 +66,14 @@ GitHub URLの評価には `gh` の認証も必要です。詳しくは[ローカ
 .venv/bin/issue-model-app --install-mac-app
 ```
 
-起動すると専用ウィンドウが開きます（ブラウザは使わず、このMac内だけで動作）。APIキーをKeychainに保存し、タスクやプロンプトを入力して「評価する」を押すと結果が表示されます。
+起動すると専用ウィンドウが開きます（ブラウザは使わず、このMac内だけで動作）。評価モデルを選んでAPIキーをKeychainに保存し、タスクやプロンプトを入力して「評価する」を押すと結果が表示されます。
 詳しくは[デスクトップアプリの手順](docs/desktop.md)を参照してください。
 
 ## iOSネイティブアプリ
 
 iPhone / iPadから同じ評価を行うSwiftUIアプリのソースを `ios/` に同梱しています。
 Pythonが動かない環境のため、`issue_router/core.py` の2段階評価をSwiftへ移植し、
-端末から直接Jev APIを呼びます（サーバもMacの常時起動も不要）。
+端末から直接、評価モデル（JevまたはWorkers AIのClef）のAPIを呼びます（サーバもMacの常時起動も不要）。
 
 ```sh
 open ios/JevIssueRouter.xcodeproj
@@ -64,7 +87,8 @@ GitHub Issue URLを読む場合はGitHubトークンも保存します。実機�
 
 利用先のワークフローから共有Actionを呼び出します。Pythonソースのコピーは不要です。
 公開後は組織内外のpublic/privateリポジトリから利用できます。
-利用先の `TYPESAFE_API_KEY` Secretと、このActionを許可するActionsポリシーが必要です。
+利用先の `TYPESAFE_API_KEY` Secret（Clefを使う場合は `CLOUDFLARE_API_TOKEN` Secretと `CLOUDFLARE_ACCOUNT_ID` 変数）と、
+このActionを許可するActionsポリシーが必要です。
 
 ```yaml
 - uses: buckmoon/jev-issue-router@main
@@ -118,10 +142,14 @@ API障害時に推薦を捏造しません。
 ## 実装・検証の範囲
 
 - 共通エンジン、CLI、macOSデスクトップアプリ、Socket Modeアダプタ、共有Actionを実装しています。
-- iOSアプリは同じ評価ロジックのSwift移植です。同じ入力・同じJev応答でPython版と結果JSON・送信リクエスト・
-  表示テキストが一致することをフェイク応答で確認し、シミュレータ向けビルドまで確認しています（実機・実APIは未検証）。
+- iOSアプリは同じ評価ロジックのSwift移植です。同じ入力・同じ評価モデルの応答（Clefのエンベロープ付き応答を含む）で
+  Python版と結果JSON・送信リクエスト・表示テキストが一致することをフェイク応答で確認し、
+  シミュレータ向けビルドまで確認しています（実機・実APIは未検証）。
+- Clef（Workers AI / 手元のサーバー）への対応は、フェイク応答とモックで検証しています。実APIでの疎通確認と、
+  Jevとの判定の比較・校正はまだ行っていません。
 - 通常のCIはモックを使い、実API料金・Slack投稿・Issueコメントを発生させません。
-- 実行時にはIssueのタイトル・本文・明示したコンテキストをJevへ送信します。`--repo` 指定時はリポジトリのメタデータも送信します。
+- 実行時にはIssueのタイトル・本文・明示したコンテキストを、選んだ評価モデル（TypeSafe、Cloudflare Workers AI、または指定したClefサーバー）へ送信します。
+  `--repo` 指定時はリポジトリのメタデータも送信します。
 - 推薦はAPIのモデルID・設定を基準にします。各製品UIの表示名や利用権限は別途確認が必要です。
 - Slack App登録と利用先リポジトリへのSecret設定は、導入先ごとに必要です。
 

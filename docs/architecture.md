@@ -57,7 +57,7 @@ iOSではPythonが動かないため、`ios/JevIssueRouter/Engine/` が `core.py
 
 評価軸・方針・カタログ・結果JSONを変更したらSwift側も更新してください。
 `tests/test_ios.py` が、定数・方針名・評価軸の選択肢・カタログの写しのずれを検出します。
-移植の同値性は、同じJev応答をPython版とSwift版に与えて結果JSON・送信リクエスト・表示テキストを
+移植の同値性は、同じ評価モデルの応答（Clefのエンベロープ付き応答を含む）をPython版とSwift版に与えて結果JSON・送信リクエスト・表示テキストを
 突き合わせて確認します（`input_sha256` を含む。表示テキストは `--policy` の言い換え1行のみ差があります）。
 
 ## 判定結果
