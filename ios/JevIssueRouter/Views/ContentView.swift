@@ -95,7 +95,7 @@ struct ContentView: View {
                 HStack {
                     if model.isEvaluating {
                         ProgressView().padding(.trailing, 6)
-                        Text("Jevで評価中…")
+                        Text("\(model.evaluatorLabel)で評価中…")
                     } else {
                         Text("評価する").fontWeight(.semibold)
                     }
@@ -119,20 +119,30 @@ struct ContentView: View {
     private var noticeSection: some View {
         Section {
             if !model.hasAPIKey {
-                Label("TypeSafe APIキーが未設定です。設定から保存してください。", systemImage: "key")
+                Label((model.settings.evaluator == "clef" ? "Cloudflare APIトークン" : "TypeSafe APIキー")
+                      + "が未設定です。設定から保存してください。", systemImage: "key")
                     .font(.footnote)
             }
             if model.input == .url && !model.hasGitHubToken {
                 Label("GitHubトークンが未設定です。設定から保存してください。", systemImage: "link")
                     .font(.footnote)
             }
-            Text("入力した本文と追加コンテキストは、評価のためTypeSafeのJev APIへ送信されます。"
+            Text(Self.notices[model.settings.evaluator, default: Self.notices["jev"]!]
                  + "推薦先の各社APIは実行しません。入力内容はこの端末内に自動保存され、次回起動時に復元されます"
                  + "（APIキーと結果は保存しません）。")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
     }
+}
+
+extension ContentView {
+    /// Where the issue text goes, per evaluator; the same destinations as the macOS app's notices.
+    static let notices = [
+        "jev": "入力した本文と追加コンテキストは、評価のためTypeSafeのJev APIへ送信されます。",
+        "clef": "入力した本文と追加コンテキストは、評価のためCloudflare Workers AIのClefへ送信されます"
+            + "（Cloudflareの利用料が発生します）。Clefの判定は未校正で、Jevと同じ結果になる保証はありません。",
+    ]
 }
 
 #Preview {

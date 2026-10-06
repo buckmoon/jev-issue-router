@@ -19,16 +19,21 @@ final class AppModel {
 
     var input: Input = .body
     var draft = DraftStore.load()
+    private(set) var settings = SettingsStore.load()
     var outcome: Outcome?
     var errorMessage: String?
     var isEvaluating = false
 
-    private(set) var hasAPIKey = Keychain.entry(service: Keychain.typesafeService).exists
+    private(set) var hasAPIKey = Keychain.entry(service: SettingsStore.load().keychainService).exists
     private(set) var hasGitHubToken = Keychain.entry(service: Keychain.githubService).exists
 
-    /// Called when the settings sheet closes, so the notices reflect what was just saved or deleted.
+    /// "Jev" or "Clef", for the notices and the progress text.
+    var evaluatorLabel: String { settings.label }
+
+    /// Called when the settings sheet closes, so the notices reflect what was just saved, chosen or deleted.
     func refreshKeyStatus() {
-        hasAPIKey = Keychain.entry(service: Keychain.typesafeService).exists
+        settings = SettingsStore.load()
+        hasAPIKey = Keychain.entry(service: settings.keychainService).exists
         hasGitHubToken = Keychain.entry(service: Keychain.githubService).exists
     }
 
@@ -51,8 +56,20 @@ final class AppModel {
 
     func evaluate() async {
         errorMessage = nil
-        guard let key = Keychain.read(service: Keychain.typesafeService) else {
-            errorMessage = "APIキーが未設定です。右上の設定から保存してください。"
+        refreshKeyStatus()
+        let evaluator: Evaluator
+        do {
+            evaluator = try settings.makeEvaluator()  // before GitHub or the evaluator is contacted
+        } catch let error as RouterError {
+            errorMessage = error.message + "。右上の設定を確認してください。"
+            return
+        } catch {
+            errorMessage = "評価モデルの設定を確認してください。"
+            return
+        }
+        guard let key = Keychain.read(service: evaluator.keychainService) else {
+            errorMessage = (evaluator.name == "jev" ? "TypeSafe APIキー" : "Cloudflare APIトークン")
+                + "が未設定です。右上の設定から保存してください。"
             return
         }
         isEvaluating = true
@@ -70,8 +87,9 @@ final class AppModel {
                 body = draft.body
             }
             let issue = try Router.normalizeIssue(title: title, body: body, context: draft.context)
-            let client = JevClient(apiKey: key)
-            let result = try await Router.route(issue: issue, catalog: catalog, policy: draft.policy) { request in
+            let client = SystemOneClient(evaluator: evaluator, token: key)
+            let result = try await Router.route(issue: issue, catalog: catalog, policy: draft.policy,
+                                                evaluator: evaluator) { request in
                 try await client.evaluate(request)
             }
             outcome = Outcome(result: result, text: Render.text(result))

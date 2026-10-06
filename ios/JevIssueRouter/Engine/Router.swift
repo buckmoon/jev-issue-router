@@ -24,13 +24,15 @@ struct ValidatedAnswer {
     }
 }
 
-/// Port of `issue_router/core.py:route`. Two Jev calls: assess the issue, then select one model and
-/// effort per provider. Nothing is recommended when Jev abstains; recommendations are never invented.
+/// Port of `issue_router/core.py:route`. Two evaluator calls (Jev or Clef): assess the issue, then select one
+/// model and effort per provider. Nothing is recommended when the evaluator abstains; recommendations are never
+/// invented. The request body is the same for Jev and Clef except for "model".
 enum Router {
     static let providers = Catalog.providers
     static let policyVersion = "2026-09-20.4"
     static let maxInputChars = 60000
     static let topCandidates = 5
+    static let maxQuestions = 64  // Clef's per-request limit; Jev's is no lower
 
     static func normalizeIssue(title: String = "", body: String = "", context: String = "") throws -> [(String, String)] {
         let issue = [("title", title), ("body", body), ("context", context)]
@@ -86,7 +88,7 @@ enum Router {
     }
 
     static func route(issue: [(String, String)], catalog: Catalog, policy: String,
-                      jevModel: String = JevClient.defaultModel,
+                      evaluator: Evaluator = .jev(),
                       evaluate: (JSONValue) async throws -> JSONValue) async throws -> JSONValue {
         guard Policies.names.contains(policy), let objective = Policies.objectives[policy] else {
             throw RouterError("Unknown policy")
@@ -103,15 +105,30 @@ enum Router {
                      instructions: guardText
                         + "Decide only whether the supplied evidence covers this aspect of the task: \(name).")
         }
-        let first = try await evaluate(request(model: jevModel, state: evidence, questions: questions))
+        guard questions.count <= maxQuestions else { throw RouterError("Evaluator requests support at most 64 questions") }
+        let first = try await evaluate(request(model: evaluator.assessModel, state: evidence, questions: questions))
         let answers = try validate(first, questions: questions)
         let assessment = Rubrics.names.compactMap { name in answers[name].map { (name, $0) } }
         let missing = Rubrics.contextNames.filter { answers["context_" + $0]?.choice == "missing" }
 
         var warnings = ["確率・confidenceは実装成功率ではありません。選定ルールは実Issueで未校正です。",
                         "APIのモデルID・推論設定です。各CLI/UIの対応やアカウント利用可否は別途確認が必要です。"]
+        if evaluator.name == "clef" {
+            warnings.append("評価モデルはClefです。評価軸・方針・候補の説明はJevで動作確認したもので、"
+                + "Clefでは未校正です。Jevと同じ結果になる保証はありません。")
+        }
+        var calls: [JSONValue] = []
+        func record(_ response: JSONValue) {
+            calls.append(call(response))
+            if let limit = evaluator.contextTokens, case let .int(tokens) = response["usage"]?["input_tokens"] ?? .null,
+               Double(tokens) >= Double(limit) * 0.9 {
+                warnings.append("入力が評価モデルのコンテキスト上限に近づいています。Clefは長い入力を黙って"
+                    + "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。")
+            }
+        }
+        record(first)
         if Policies.topModel.contains(policy) {
-            warnings.append("この方針はモデルを各社の最上位（カタログの最後）に固定します。Jevが選んだのは推論設定です。")
+            warnings.append("この方針はモデルを各社の最上位（カタログの最後）に固定します。\(evaluator.label)が選んだのは推論設定です。")
         }
         if Policies.guidance[policy]?.costBasis != nil {
             warnings.append("コストは定性的な判断です。料金・所要時間・手戻り・節約額の実測や算出はしていません。")
@@ -120,7 +137,6 @@ enum Router {
             warnings.append("モデルカタログの確認から30日超過しています。公式仕様を再確認してください。")
         }
 
-        var calls: [JSONValue] = [call(first)]
         func result(status: String, recommendations: [(String, JSONValue)]) -> JSONValue {
             .fields([
                 ("schema_version", .int(1)),
@@ -135,7 +151,8 @@ enum Router {
                 ("assessment", .fields(assessment.map { ($0.0, $0.1.raw) })),
                 ("missing_context", .array(missing.map { .string($0) })),
                 ("recommendations", .fields(recommendations)),
-                ("jev_calls", .array(calls)),
+                ("evaluator", evaluator.describe()),
+                ("jev_calls", .array(calls)),  // every evaluator call, Jev or Clef; the name is kept for schema_version 1
                 ("warnings", .array(warnings.map { .string($0) })),
             ])
         }
@@ -193,9 +210,12 @@ enum Router {
             ("missing_context", .array(missing.map { .string($0) })),
             ("policy", .string(policy)),
         ]
-        let second = try await evaluate(request(model: jevModel, state: state, questions: selectionQuestions))
+        guard selectionQuestions.count <= maxQuestions else {
+            throw RouterError("Evaluator requests support at most 64 questions")
+        }
+        let second = try await evaluate(request(model: evaluator.selectModel, state: state, questions: selectionQuestions))
         let selections = try validate(second, questions: selectionQuestions)
-        calls.append(call(second))
+        record(second)
 
         var recommendations: [(String, JSONValue)] = []
         var chosen: [Bool] = []

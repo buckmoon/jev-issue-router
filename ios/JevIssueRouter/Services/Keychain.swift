@@ -4,8 +4,9 @@ import Security
 /// Secrets live only in the iOS Keychain: device-only, never synced to iCloud, never written to a file,
 /// never logged. Saved values are not readable from the UI; only presence and save time are shown.
 enum Keychain {
-    /// Same service name as the CLI and the macOS app use for the TypeSafe key.
+    /// Same service names as the CLI and the macOS app use for the TypeSafe key and the Cloudflare token.
     static let typesafeService = "local.jev.typesafe"
+    static let cloudflareService = "local.clef.cloudflare"
     static let githubService = "local.jev.github"
     static let account = "jev-issue-router"
 

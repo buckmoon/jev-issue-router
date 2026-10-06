@@ -2,15 +2,21 @@ import Foundation
 
 /// Port of `issue_router/core.py:render`: the same Japanese summary the CLI and macOS app print.
 enum Render {
+    /// Results from before Clef have no "evaluator" and render as Jev.
+    static func evaluatorLabel(_ result: JSONValue) -> String {
+        Evaluator.labels[result["evaluator"]?["name"]?.stringValue ?? "jev"] ?? "Jev"
+    }
+
     static func text(_ result: JSONValue) -> String {
-        var lines = ["Jev モデル推薦（暫定）", ""]
+        let evaluator = evaluatorLabel(result)
+        var lines = ["\(evaluator) モデル推薦（暫定）", ""]
         let status = result["status"]?.stringValue ?? "needs_context"
         let recommendations = result["recommendations"]
 
         for provider in Router.providers {
             guard let rec = recommendations?[provider], rec["status"]?.stringValue == "selected" else {
                 let rec = recommendations?[provider]
-                let reason = rec != nil && status == "partial" ? "Jevが候補を1つに絞れませんでした" : "情報不足"
+                let reason = rec != nil && status == "partial" ? "\(evaluator)が候補を1つに絞れませんでした" : "情報不足"
                 lines.append("• \(provider): 選定保留（\(reason)）")
                 let candidates = rec?["top_candidates"]?.arrayValue ?? []
                 if !candidates.isEmpty {
@@ -66,14 +72,20 @@ enum Render {
             }
         } else if status != "selected" {
             if !missing.isEmpty {
-                lines += ["", "選定を保留しました。Jevが不足と判断した情報:"] + missing.map { "• " + $0 }
+                lines += ["", "選定を保留しました。\(evaluator)が不足と判断した情報:"] + missing.map { "• " + $0 }
                 lines.append("これらを本文か追加コンテキストに補足して再評価してください。")
             } else {
                 lines += ["", "期待する動作・現状・変更範囲・完了条件を補足して再評価してください。"]
             }
         }
 
-        lines += ["", "方針: \(result["policy"]?.stringValue ?? "") / カタログ: \(result["catalog_version"]?.stringValue ?? "")"]
+        let info = result["evaluator"]
+        var shown = info?["models"]?["select"]?.stringValue ?? Evaluator.defaultJevModel
+        if let assess = info?["models"]?["assess"]?.stringValue, assess != shown {
+            shown = "\(assess) → \(shown)"  // tiered: assessment stage → selection stage
+        }
+        lines += ["", "評価モデル: \(evaluator) (\(info?["host"]?.stringValue ?? "typesafe") / \(shown)) / "
+            + "方針: \(result["policy"]?.stringValue ?? "") / カタログ: \(result["catalog_version"]?.stringValue ?? "")"]
 
         let advice = Router.providers
             .compactMap { recommendations?[$0] }
