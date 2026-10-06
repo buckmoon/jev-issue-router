@@ -298,7 +298,7 @@ issue-model --file examples/issue.json --format json --output result.json
 CLI引数が環境変数より優先します。Slackプロセスにも同じ設定を適用できます。
 `--evaluator jev` のときClef系の設定は無視し、`--evaluator clef` のとき `--jev-model` は無視します。
 Jevのモデル名を固定する場合は、その時点でアカウントから利用できるIDを指定します。
-macOSアプリ・Slack・GitHub Actionでの評価モデルの切り替えは今後対応します（現在はJev固定）。
+macOSアプリでは画面で評価モデルを選びます（[デスクトップアプリ](desktop.md)）。SlackとGitHub Actionでの切り替えは今後対応します（現在はJev固定）。
 
 ## 他のCodexセッションから使う
 

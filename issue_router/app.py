@@ -18,17 +18,30 @@ import threading
 import time
 import webbrowser
 
-from .core import RouterError, evaluate, load_catalog, make_evaluator, normalize_issue, render, route
+from .core import RouterError, load_catalog, normalize_issue, render, route
+from .evaluators import KEYCHAIN, make_evaluator
 from .github import fetch_issue
 from .policies import POLICIES, POLICY_DESCRIPTIONS
 from .repo import snapshot
 
-KEYCHAIN_SERVICE = "local.jev.typesafe"
+KEYCHAIN_SERVICE = KEYCHAIN["jev"]
+TOKEN_ENV = {"jev": "TYPESAFE_API_KEY", "clef": "CLOUDFLARE_API_TOKEN"}  # keyed like evaluators.KEYCHAIN
 APP_NAME = "Jev Issue Router"
 BUNDLE_ID = "local.jev.issue-router"
 IDLE_SECONDS = 600
 MAX_BODY = 300_000
 DRAFT_FIELDS = ("url", "body", "context", "repo", "policy")
+# Non-secret evaluator settings; tokens live only in the Keychain.
+SETTINGS_DEFAULTS = {"evaluator": "jev", "clef_host": "workers-ai", "clef_model": "clef",
+                     "clef_assess_model": "", "clef_url": "", "cloudflare_account_id": ""}
+# Where the issue text goes, per evaluator host; the page shows the one for the current selection.
+NOTICES = {
+    "jev": "入力内容はTypeSafeのJev APIへ送信されます。",
+    "workers-ai": "入力内容はCloudflare Workers AIのClefへ送信されます（Cloudflareの利用料が発生します）。"
+                  "Clefの判定は未校正で、Jevと同じ結果になる保証はありません。",
+    "local": "入力内容は指定したClefサーバーへ送信されます。既定のこのMac内（127.0.0.1）のサーバーなら外部へは送信しません。"
+             "Clefの判定は未校正で、Jevと同じ結果になる保証はありません。",
+}
 KEY_PATTERN = re.compile(r"[\x21-\x7e]{8,512}")
 
 PAGE = """<!doctype html>
@@ -53,15 +66,35 @@ pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px s
 <h1>Jev Issue Router</h1>
 <p class="sub">Issueやタスクに適したモデルと推論設定を、OpenAI・Claude・Grokそれぞれについて選びます。</p>
 
-<section><h2>APIキー</h2>
+<section><h2>評価モデルとAPIキー</h2>
+<label for="evaluator">評価モデル</label>
+<select id="evaluator"><option value="jev">Jev（TypeSafe）</option>
+<option value="clef/workers-ai">Clef（Cloudflare Workers AI）</option>
+<option value="clef/local">Clef（このMac内のサーバー）</option></select>
+<div id="clefBox" hidden>
+<div id="cfBox"><label for="account">CloudflareアカウントID（32桁の16進数）</label>
+<input id="account" spellcheck="false" autocomplete="off" placeholder="32桁の16進数"></div>
+<div id="localBox"><label for="clefUrl">サーバーのURL（空なら http://127.0.0.1:11434/v1/systemone）</label>
+<input id="clefUrl" spellcheck="false" autocomplete="off" placeholder="http://127.0.0.1:11434/v1/systemone">
+<p class="note">loopbackのhttp（127.0.0.1など）か、httpsのURLだけ使えます。モデルはOllamaのタグも指定できます。
+メモリの目安: clef-flash 約12GB（16GB以上のMac）、clef 約18GB〜（32GB以上推奨）。</p></div>
+<div id="presetBox"><label>使い分け</label><div class="row">
+<button class="ghost" type="button" data-select="clef" data-assess="">精度優先（clef / clef）</button>
+<button class="ghost" type="button" data-select="clef-flash" data-assess="">高速（clef-flash / clef-flash）</button>
+<button class="ghost" type="button" data-select="clef" data-assess="clef-flash">段階分け（clef-flash → clef）</button></div></div>
+<div class="row"><div><label for="clefModel">選定段階のモデル</label><input id="clefModel" spellcheck="false" autocomplete="off"></div>
+<div><label for="clefAssess">評価段階のモデル（空なら選定段階と同じ）</label><input id="clefAssess" spellcheck="false" autocomplete="off"></div></div>
+</div>
+<p class="note err" id="settingsState"></p>
 <div class="state"><span class="dot" id="savedDot"></span><b>保存状態</b><span id="keyState">確認中…</span></div>
 <div class="state"><span class="dot" id="pingDot"></span><b>疎通</b><span id="pingState">未確認</span>
 <button class="ghost" id="check" type="button" style="margin-left:auto;padding:4px 12px">疎通確認</button></div>
-<div class="row"><div><label for="key">TypeSafe APIキー</label>
+<div class="row" id="keyRow"><div><label for="key" id="keyLabel">TypeSafe APIキー</label>
 <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="貼り付けて保存"></div>
 <button id="saveKey">Keychainに保存</button></div>
 <p class="note">キーはmacOS Keychainにだけ保存します。ファイルやブラウザには残さず、保存後は画面にも表示しません。
-疎通確認は、保存済みのキーでJev APIへごく小さな固定の問い合わせを1回送ります（わずかな利用量が発生。入力内容は送りません）。</p>
+評価モデルの設定（アカウントID・URL・モデル名）はこのMac内の設定ファイルに保存します。
+疎通確認は、選択中の評価モデルへごく小さな固定の問い合わせを送ります（段階でモデルが違えば各1回。わずかな利用量が発生。入力内容は送りません）。</p>
 </section>
 
 <section><h2>入力</h2>
@@ -74,11 +107,11 @@ pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px s
 <label for="repo">リポジトリのフォルダ（任意。状態を読んで判断材料に加える）</label>
 <div class="row"><input id="repo" spellcheck="false" placeholder="/Users/you/dev/your-repo">
 <button class="ghost" id="pick" type="button">選択…</button></div>
-<p class="note">指定すると、構成・テストやCIの有無・Gitの状態・Issueの語に一致するパスなどのメタデータをJevへ送信します。ファイルの中身は読みません。</p>
+<p class="note">指定すると、構成・テストやCIの有無・Gitの状態・Issueの語に一致するパスなどのメタデータを評価モデルへ送信します。ファイルの中身は読みません。</p>
 <div class="row"><div><label for="policy">方針</label><select id="policy"></select></div>
 <button class="ghost" id="clear" type="button">入力をクリア</button><button id="run">評価する</button></div>
 <p class="note" id="policyHelp" style="color:var(--fg)"></p>
-<p class="note">入力内容はTypeSafeのJev APIへ送信されます。推薦先モデルは実行しません。
+<p class="note"><span id="notice"></span>推薦先モデルは実行しません。
 入力内容はこのMac内のファイルに自動保存され、次回起動時に復元されます（APIキーと結果は保存しません）。「入力をクリア」で消去できます。</p>
 </section>
 
@@ -87,29 +120,49 @@ pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px s
 <button class="ghost" id="toggle" hidden>JSON表示</button><button class="ghost" id="copy" hidden>コピー</button></div>
 <pre id="out" hidden></pre></section>
 </main><script>
-const TOKEN="__TOKEN__",POLICIES=__POLICIES__,DESCRIPTIONS=__DESCRIPTIONS__,$=id=>document.getElementById(id);
-let last=null,showJson=false;
+const TOKEN="__TOKEN__",POLICIES=__POLICIES__,DESCRIPTIONS=__DESCRIPTIONS__,NOTICES=__NOTICES__,$=id=>document.getElementById(id);
+let last=null,showJson=false,status=null,clefHost="workers-ai",settingsTimer=null;
 async function api(path,data){const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json","X-App-Token":TOKEN},body:JSON.stringify(data||{})});return r.json()}
 for(const p of POLICIES){const o=document.createElement("option");o.value=o.textContent=p;$("policy").append(o)}
 function showPolicy(){$("policyHelp").textContent=$("policy").value+": "+(DESCRIPTIONS[$("policy").value]||"")}
 $("policy").addEventListener("change",showPolicy);showPolicy();
 function mark(dot,text,cls,msg){$(dot).className="dot "+cls;$(text).textContent=msg;$(text).className=cls=="ng"?"err":""}
-async function refreshKey(){const s=await api("/api/status");const at=s.saved_at?"（"+s.saved_at+" 保存）":"";
-if(s.env)mark("savedDot","keyState","ok","環境変数 TYPESAFE_API_KEY を使用中（Keychainより優先）"+(s.keychain?"。Keychainにも保存済み"+at:""));
+function kind(){const v=$("evaluator").value;return v=="jev"?"jev":v.split("/")[1]}
+function label(){return kind()=="jev"?"Jev":"Clef"}
+function service(){return kind()=="jev"?"jev":"clef"}
+function settings(){const v=$("evaluator").value;return{evaluator:v=="jev"?"jev":"clef",clef_host:v=="jev"?clefHost:v.split("/")[1],
+clef_model:$("clefModel").value,clef_assess_model:$("clefAssess").value,clef_url:$("clefUrl").value,cloudflare_account_id:$("account").value}}
+function applySettings(s){clefHost=s.clef_host;$("evaluator").value=s.evaluator=="jev"?"jev":"clef/"+s.clef_host;
+$("clefModel").value=s.clef_model;$("clefAssess").value=s.clef_assess_model;$("clefUrl").value=s.clef_url;$("account").value=s.cloudflare_account_id}
+async function saveSettings(){clearTimeout(settingsTimer);const r=await api("/api/settings",{settings:settings()}).catch(()=>({error:"アプリとの通信に失敗しました"}));
+$("settingsState").textContent=r.error?"設定を保存できません: "+r.error:"";return!r.error}
+function queueSettings(){clearTimeout(settingsTimer);settingsTimer=setTimeout(saveSettings,600)}
+function showKey(){if(!status)return;const k=kind();
+if(k=="local"){mark("savedDot","keyState","ok","キーは不要です（サーバーが要求する場合だけ CLEF_API_KEY 環境変数を付けます）");$("check").disabled=false;return}
+const s=status[service()],env=k=="jev"?"TYPESAFE_API_KEY":"CLOUDFLARE_API_TOKEN",at=s.saved_at?"（"+s.saved_at+" 保存）":"";
+if(s.env)mark("savedDot","keyState","ok","環境変数 "+env+" を使用中（Keychainより優先）"+(s.keychain?"。Keychainにも保存済み"+at:""));
 else if(s.keychain)mark("savedDot","keyState","ok","Keychainに保存済み"+at);
 else mark("savedDot","keyState","ng","未設定。下に貼り付けて保存してください");
-$("check").disabled=!(s.env||s.keychain);return s}
+$("check").disabled=!(s.env||s.keychain)}
+function updateView(){const k=kind();if(k!="jev")clefHost=k;$("clefBox").hidden=k=="jev";$("cfBox").hidden=$("presetBox").hidden=k!="workers-ai";
+$("localBox").hidden=k!="local";$("keyRow").hidden=k=="local";
+$("keyLabel").textContent=k=="jev"?"TypeSafe APIキー":"Cloudflare APIトークン（対象アカウントのWorkers AI権限）";
+$("notice").textContent=NOTICES[k];mark("pingDot","pingState","","未確認");showKey()}
+async function refreshKey(){status=await api("/api/status");showKey();return status}
 async function checkKey(){$("check").disabled=true;mark("pingDot","pingState","wait","確認中…");
-const r=await api("/api/check").catch(()=>({error:"アプリとの通信に失敗しました"}));$("check").disabled=false;
-if(r.error)mark("pingDot","pingState","ng",r.error);else mark("pingDot","pingState","ok","OK — Jev APIが応答しました（"+r.model+"、"+r.checked_at+" 確認）")}
+const r=await saveSettings()?await api("/api/check").catch(()=>({error:"アプリとの通信に失敗しました"})):{error:"評価モデルの設定を確認してください"};
+showKey();if(r.error)mark("pingDot","pingState","ng",r.error);else mark("pingDot","pingState","ok","OK — "+r.models.join(", ")+"（"+r.checked_at+" 確認）")}
 $("check").onclick=checkKey;
-$("saveKey").onclick=async()=>{const b=$("saveKey");b.disabled=true;const r=await api("/api/key",{key:$("key").value});$("key").value="";b.disabled=false;
+$("evaluator").addEventListener("change",()=>{updateView();saveSettings()});
+for(const id of["account","clefUrl","clefModel","clefAssess"])$(id).addEventListener("input",queueSettings);
+for(const b of document.querySelectorAll("#presetBox button"))b.onclick=()=>{$("clefModel").value=b.dataset.select;$("clefAssess").value=b.dataset.assess;saveSettings()};
+$("saveKey").onclick=async()=>{const b=$("saveKey");b.disabled=true;const r=await api("/api/key",{service:service(),key:$("key").value});$("key").value="";b.disabled=false;
 if(r.error){mark("savedDot","keyState","ng",r.error);return}
 await refreshKey();await checkKey()};
 function show(){if(!last)return;$("out").textContent=showJson?JSON.stringify(last.result,null,2):last.text;$("toggle").textContent=showJson?"テキスト表示":"JSON表示"}
 $("toggle").onclick=()=>{showJson=!showJson;show()};$("copy").onclick=()=>{const t=$("out").textContent;if(navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{});else{const r=document.createRange();r.selectNodeContents($("out"));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand("copy")}};
-$("run").onclick=async()=>{const b=$("run");b.disabled=true;$("status").className="note";$("status").textContent="Jevで評価中…";
-let r;try{r=await api("/api/route",{url:$("url").value,body:$("body").value,context:$("context").value,repo:$("repo").value,policy:$("policy").value})}catch(e){r={error:"アプリとの通信に失敗しました。起動し直してください。"}}
+$("run").onclick=async()=>{const b=$("run");b.disabled=true;$("status").className="note";$("status").textContent=label()+"で評価中…";
+let r;try{if(!await saveSettings())throw new Error("settings");r=await api("/api/route",{url:$("url").value,body:$("body").value,context:$("context").value,repo:$("repo").value,policy:$("policy").value})}catch(e){r={error:e.message=="settings"?"評価モデルの設定を確認してください。":"アプリとの通信に失敗しました。起動し直してください。"}}
 b.disabled=false;if(r.error){$("status").textContent=r.error;$("status").className="note err";return}
 last=r;$("status").textContent="status: "+r.result.status;for(const id of["out","toggle","copy"])$(id).hidden=false;show()};
 $("pick").onclick=async()=>{const b=$("pick");b.disabled=true;const r=await api("/api/choose-folder").catch(()=>({}));b.disabled=false;
@@ -120,17 +173,18 @@ function saveDraft(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>api("/api/
 for(const f of FIELDS){$(f).addEventListener("input",saveDraft);$(f).addEventListener("change",saveDraft)}
 $("clear").onclick=()=>{for(const f of FIELDS)$(f).value=f=="policy"?POLICIES[0]:"";showPolicy();saveDraft()};
 api("/api/draft").then(r=>{for(const f of FIELDS)if(r.draft&&typeof r.draft[f]=="string"&&(f!="policy"||POLICIES.includes(r.draft[f])))$(f).value=r.draft[f];showPolicy()}).catch(()=>{});
-refreshKey();setInterval(()=>api("/api/ping").catch(()=>{}),20000);
+api("/api/settings").then(r=>{if(r.settings)applySettings(r.settings);updateView();return refreshKey()}).catch(()=>{});
+setInterval(()=>api("/api/ping").catch(()=>{}),20000);
 </script></body></html>
 """
 
 
-def keychain_entry():
+def keychain_entry(service="jev"):
     """(exists, local save time or None). Reads attributes only, never the secret."""
     if sys.platform != "darwin":
         return False, None
     try:
-        proc = subprocess.run(["/usr/bin/security", "find-generic-password", "-s", KEYCHAIN_SERVICE,
+        proc = subprocess.run(["/usr/bin/security", "find-generic-password", "-s", KEYCHAIN[service],
                                "-a", getpass.getuser()], capture_output=True, text=True, timeout=20)
     except (OSError, subprocess.TimeoutExpired):
         return False, None
@@ -143,48 +197,69 @@ def keychain_entry():
     return True, saved.astimezone().strftime("%Y-%m-%d %H:%M")
 
 
-def keychain_has_key():
-    return keychain_entry()[0]
+def keychain_has_key(service="jev"):
+    return keychain_entry(service)[0]
 
 
-def check_key(call=evaluate):
-    """One tiny fixed question proves the key is accepted; no user input is sent."""
-    request = {"model": os.getenv("JEV_MODEL", "jev-latest"), "state": {"text": "ping"},
-               "questions": {"ok": {"type": "choice", "instructions": "Select yes.",
-                                    "criteria": {"yes": "Always select this.", "no": "Never select this."}}}}
-    try:
-        response = call(request)
-    except RouterError as exc:
-        message = str(exc)
-        if "HTTP 401" in message or "HTTP 403" in message:
-            raise RouterError("NG — キーが拒否されました（" + message.split(";")[0] + "）。キーとAPI利用権限を確認してください") from None
-        if "HTTP 429" in message:
-            raise RouterError("NG — キーは届きましたが利用制限中です（Jev HTTP 429）。残高・制限を確認してください") from None
-        if "HTTP" in message:
-            raise RouterError("NG — Jev APIがエラーを返しました（" + message.split(";")[0] + "）") from None
-        if "network" in message:
-            raise RouterError("NG — Jev APIに接続できません。ネットワークを確認してください") from None
-        raise RouterError("NG — " + message) from None
-    if not isinstance(response, dict) or not isinstance(response.get("answers"), dict):
-        raise RouterError("NG — Jev APIの応答形式が想定と異なります")
-    return {"model": str(response.get("model") or "jev")[:60],
-            "checked_at": dt.datetime.now().strftime("%H:%M")}
+def key_status(service):
+    exists, saved_at = keychain_entry(service)
+    return {"env": bool(os.environ.get(TOKEN_ENV[service])), "keychain": exists, "saved_at": saved_at}
 
 
-def save_key(key):
+# Hints for a rejected key, per evaluator host.
+KEY_HINTS = {"typesafe": "キーとAPI利用権限を確認してください",
+             "workers-ai": "トークンの値、Workers AI権限、アカウントIDを確認してください",
+             "local": "サーバーのキー設定（CLEF_API_KEY）を確認してください"}
+
+
+def check_connection(evaluator, call=None):
+    """One tiny fixed question per distinct model proves the evaluator answers; no user input is sent."""
+    call = call or evaluator.call
+    label = evaluator.label
+    models = []
+    for model in dict.fromkeys((evaluator.models["assess"], evaluator.models["select"])):
+        request = {"model": model, "state": {"text": "ping"},
+                   "questions": {"ok": {"type": "choice", "instructions": "Select yes.",
+                                        "criteria": {"yes": "Always select this.", "no": "Never select this."}}}}
+        try:
+            response = call(request)
+        except RouterError as exc:
+            message = str(exc)
+            if "HTTP 401" in message or "HTTP 403" in message:
+                raise RouterError("NG — キーが拒否されました（" + message.split(";")[0] + "）。"
+                                  + KEY_HINTS[evaluator.host]) from None
+            if "HTTP 429" in message:
+                raise RouterError(f"NG — キーは届きましたが利用制限中です（{label} HTTP 429）。残高・制限を確認してください") from None
+            if "HTTP" in message:
+                raise RouterError(f"NG — {label} APIがエラーを返しました（" + message.split(";")[0] + "）") from None
+            if "network" in message:
+                if evaluator.host == "local":
+                    raise RouterError("NG — Clefサーバーに接続できません。サーバーの起動、URL、"
+                                      "モデルの取得（ollama pull）を確認してください") from None
+                raise RouterError(f"NG — {label} APIに接続できません。ネットワークを確認してください") from None
+            raise RouterError("NG — " + message) from None
+        if not isinstance(response, dict) or not isinstance(response.get("answers"), dict):
+            raise RouterError(f"NG — {label} APIの応答形式が想定と異なります")
+        models.append(str(response.get("model") or model)[:60])
+    return {"models": models, "checked_at": dt.datetime.now().strftime("%H:%M")}
+
+
+def save_key(key, service="jev"):
+    if service not in KEYCHAIN:
+        raise RouterError("保存先のキーの種類が正しくありません")
     if sys.platform != "darwin":
-        raise RouterError("Keychainへの保存はmacOSのみ対応です。TYPESAFE_API_KEY を設定してください")
+        raise RouterError(f"Keychainへの保存はmacOSのみ対応です。{TOKEN_ENV[service]} を設定してください")
     key = key.strip()
     if not KEY_PATTERN.fullmatch(key) or any(char in key for char in "\"'\\"):
         raise RouterError("キーの形式が正しくありません")
     # Pass the secret on stdin, not argv, so it never appears in the process list.
-    command = f'add-generic-password -U -s {KEYCHAIN_SERVICE} -a "{getpass.getuser()}" -w "{key}"\n'
+    command = f'add-generic-password -U -s {KEYCHAIN[service]} -a "{getpass.getuser()}" -w "{key}"\n'
     try:
         proc = subprocess.run(["/usr/bin/security", "-i"], input=command, capture_output=True,
                               text=True, timeout=30)
     except (OSError, subprocess.TimeoutExpired):
         raise RouterError("Keychainへの保存に失敗しました") from None
-    if proc.returncode != 0 or not keychain_has_key():
+    if proc.returncode != 0 or not keychain_has_key(service):
         raise RouterError("Keychainへの保存に失敗しました")
 
 
@@ -206,6 +281,16 @@ def load_draft(path=None):
     return {field: data[field] for field in DRAFT_FIELDS if isinstance(data.get(field), str)}
 
 
+def write_private(path, data):
+    """Owner-only JSON file, replaced atomically."""
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    temporary = path.with_suffix(".tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, ensure_ascii=False)
+    os.replace(temporary, path)
+
+
 def save_draft(data, path=None):
     """Keep the form inputs for the next launch: owner-only file, never the API key or results."""
     path = path or draft_path()
@@ -214,12 +299,47 @@ def save_draft(data, path=None):
     if not any(value.strip() for field, value in draft.items() if field != "policy"):
         path.unlink(missing_ok=True)
         return
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        json.dump(draft, handle, ensure_ascii=False)
-    os.replace(temporary, path)
+    write_private(path, draft)
+
+
+def settings_path():
+    return draft_path().with_name("settings.json")
+
+
+def load_settings(path=None):
+    settings = dict(SETTINGS_DEFAULTS)
+    try:
+        data = json.loads((path or settings_path()).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return settings
+    if isinstance(data, dict):
+        settings.update({field: data[field] for field in SETTINGS_DEFAULTS if isinstance(data.get(field), str)})
+    return settings
+
+
+def evaluator_from_settings(settings):
+    return make_evaluator(settings["evaluator"], jev_model=os.getenv("JEV_MODEL", "jev-latest"),
+                          clef_host=settings["clef_host"], clef_model=settings["clef_model"],
+                          clef_assess_model=settings["clef_assess_model"] or None,
+                          clef_url=settings["clef_url"] or None,
+                          account_id=settings["cloudflare_account_id"] or None)
+
+
+def save_settings(data, path=None):
+    """Validate through make_evaluator, then keep only the non-secret fields. Tokens never reach this file."""
+    if not isinstance(data, dict):
+        raise RouterError("設定の形式が正しくありません")
+    settings = dict(SETTINGS_DEFAULTS)
+    for field in SETTINGS_DEFAULTS:
+        value = data.get(field)
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            raise RouterError("設定の形式が正しくありません")
+        settings[field] = value.strip()
+    evaluator_from_settings(settings)
+    write_private(path or settings_path(), settings)
+    return settings
 
 
 def choose_folder():
@@ -233,10 +353,11 @@ def choose_folder():
     return proc.stdout.strip() if proc.returncode == 0 else ""  # non-zero: the user cancelled
 
 
-def handle_route(data, call_route=route, fetch=fetch_issue, inspect=snapshot):
+def handle_route(data, call_route=route, fetch=fetch_issue, inspect=snapshot, settings=load_settings):
     policy = data.get("policy") or "balanced"
     if policy not in POLICIES:
         raise RouterError("Unknown policy")
+    evaluator = evaluator_from_settings(settings())  # before GitHub or the repository are touched
     url, body = str(data.get("url") or "").strip(), str(data.get("body") or "")
     if bool(url) == bool(body.strip()):
         raise RouterError("Issue URLかタスク本文のどちらか一方を入力してください")
@@ -247,8 +368,7 @@ def handle_route(data, call_route=route, fetch=fetch_issue, inspect=snapshot):
     repo = str(data.get("repo") or "").strip()
     repository = inspect(repo, "\n".join(issue.values())) if repo else None
     result = call_route(issue, catalog=load_catalog(os.getenv("ISSUE_MODEL_CATALOG")), policy=policy,
-                        evaluator=make_evaluator("jev", jev_model=os.getenv("JEV_MODEL", "jev-latest")),
-                        repository=repository)
+                        evaluator=evaluator, repository=repository)
     return {"result": result, "text": render(result)}
 
 
@@ -271,19 +391,27 @@ def make_handler(token, state):
             # Reject DNS-rebinding and cross-site requests.
             return self.headers.get("Host") == f"127.0.0.1:{self.server.server_port}"
 
+        def authorized(self):
+            supplied = self.headers.get("X-App-Token") or ""
+            return self.local() and secrets.compare_digest(supplied, token)
+
         def do_GET(self):
             state["seen"] = time.monotonic()
+            if self.path == "/api/settings":
+                if not self.authorized():
+                    return self.reply(403, {"error": "Forbidden"})
+                return self.reply(200, {"settings": load_settings()})
             if not self.local() or self.path != "/":
                 return self.reply(404, {"error": "Not found"})
             page = PAGE.replace("__TOKEN__", token).replace("__POLICIES__", json.dumps(list(POLICIES))) \
                 .replace("__FIELDS__", json.dumps(DRAFT_FIELDS)) \
-                .replace("__DESCRIPTIONS__", json.dumps(POLICY_DESCRIPTIONS, ensure_ascii=False))
+                .replace("__DESCRIPTIONS__", json.dumps(POLICY_DESCRIPTIONS, ensure_ascii=False)) \
+                .replace("__NOTICES__", json.dumps(NOTICES, ensure_ascii=False))
             self.reply(200, page, "text/html")
 
         def do_POST(self):
             state["seen"] = time.monotonic()
-            supplied = self.headers.get("X-App-Token") or ""
-            if not self.local() or not secrets.compare_digest(supplied, token):
+            if not self.authorized():
                 return self.reply(403, {"error": "Forbidden"})
             try:
                 length = int(self.headers.get("Content-Length") or 0)
@@ -295,14 +423,14 @@ def make_handler(token, state):
                 if self.path == "/api/ping":
                     result = {}
                 elif self.path == "/api/status":
-                    exists, saved_at = keychain_entry()
-                    result = {"env": bool(os.environ.get("TYPESAFE_API_KEY")), "keychain": exists,
-                              "saved_at": saved_at}
+                    result = {"jev": key_status("jev"), "clef": key_status("clef"), "settings": load_settings()}
                 elif self.path == "/api/check":
-                    result = check_key()
+                    result = check_connection(evaluator_from_settings(load_settings()))
                 elif self.path == "/api/key":
-                    save_key(str(data.get("key") or ""))
+                    save_key(str(data.get("key") or ""), str(data.get("service") or "jev"))
                     result = {"ok": True}
+                elif self.path == "/api/settings":
+                    result = {"settings": save_settings(data["settings"]) if "settings" in data else load_settings()}
                 elif self.path == "/api/draft":
                     if "draft" in data:
                         save_draft(data["draft"])
