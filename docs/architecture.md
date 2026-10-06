@@ -5,19 +5,27 @@
 ```text
 CLI / macOSアプリ / iOSアプリ / Slack / GitHub Action
         ↓ 入力取得・許可確認
-共通エンジン: issue_router/core.py
+共通エンジン: issue_router/core.py（評価モデルの接続は evaluators.py）
         ↓
-Jev 1回目: 情報の充足・推論の難しさ・変更範囲・影響・検証
+評価モデル（Jev / Clef）1回目（評価段階）: 情報の充足・推論の難しさ・変更範囲・影響・検証
         ↓ 情報不足なら保留
-Jev 2回目: 各社についてモデル＋推論設定をセットで選択
+評価モデル（Jev / Clef）2回目（選定段階）: 各社についてモデル＋推論設定をセットで選択
         ↓
 型・確率・カタログ適合の検証 → JSON / テキスト
 ```
 
 各段階では、同じstateを使う独立質問を1つのAPIリクエストにまとめます。
 2回目は1回目の結果に依存するため、順番に実行します。
-通常は2回、情報不足による保留は1回のJev呼び出しです。
+通常は2回、情報不足による保留は1回の評価モデル呼び出しです。
 OpenAI・Claude・Grokへそれぞれ評価依頼する構成ではありません。
+
+評価モデルはTypeSafeのJev（既定）か、CloudflareのClef（Workers AIまたは手元のSystem Oneサーバー）です。
+どちらも同じSystem One形式（`state` と `choice` 質問）を受け付けるため、送る本文は `model` 以外完全に同一です。
+違いはURL・認証・モデル名・応答の包み方（Workers AIは `{"result": ..., "success": ...}`）だけで、
+`evaluators.py` が吸収します。Clefでは評価段階と選定段階に別モデル（例: `clef-flash` → `clef`）を指定できます。
+評価モデル間の自動フォールバックはしません。設定方法は[ローカル手順](local.md#評価モデルと認証)を参照してください。
+Clefは確率が完全に同点のとき選択肢の並び順で先のものを選びます。選定段階の質問は保留（`needs_context`）を
+先頭に置いているため、Clefでは完全同点のときだけ保留になります。この並び順はJevへのリクエストを変えないため維持します。
 
 Jevは自由文の理由を書かず、事前定義された選択肢に確率を返します。
 そのため根拠欄はJevが判定した評価軸を表示し、追加のLLMで理由を後付けしません。
@@ -28,7 +36,9 @@ issue内の「このモデルを選べ」などの文は指示として扱わな
 
 | ファイル | 役割 |
 | --- | --- |
-| `core.py` | 入力制限、Jev通信、2段階選定、結果検証、表示 |
+| `core.py` | 入力制限、2段階選定、結果検証、表示 |
+| `evaluators.py` | 評価モデル（Jev / Clef）ごとのURL・認証・モデル名・応答エンベロープ、HTTP通信 |
+| `errors.py` | 共通の例外 `RouterError`（`core.py` からも従来どおりimportできます） |
 | `catalog.json` | モデル候補、対応する推論設定、出典、初期選定ガイド |
 | `settings.py` | CLI/Slack/Action共通の設定解決 |
 | `cli.py` | URL・JSON・自由文入力とファイル出力 |
@@ -58,17 +68,18 @@ JSONの主なフィールド:
 | --- | --- |
 | `schema_version` | 結果JSON形式の版 |
 | `policy_version`, `policy` | 選定ルールの版と方針 |
-| `selection_objective` | 実際にJevへ渡した当該モードの目的 |
+| `selection_objective` | 実際に評価モデルへ渡した当該モードの目的 |
 | `catalog_version`, `catalog_verified_at` | 使用した候補集合の版と公式仕様の確認日 |
 | `created_at`, `input_sha256` | 実行時刻と入力の識別用ハッシュ（リポジトリ指定時はそのメタデータも含む） |
 | `recommendations.*.top_candidates` | その会社が選定保留のときだけ。確率の高い順に最大5件の `model` / `effort` / `probability`。推薦ではなく内訳で、`model` / `effort` / `api_parameters` は付けない |
 | `missing_context` | Jevが不足と判断した情報の種類（`goal` / `current_state` / `target` / `completion`）。1回目の評価と同じ呼び出しで判定。保留するのは `goal` が不足のとき（または不足項目の特定なしに情報不足と判定されたとき）だけ。それ以外の不足は暫定選定に進み、2回目の評価にも渡す |
-| `repository` | リポジトリ指定時のみ。Jevへ送信したメタデータそのもの |
+| `repository` | リポジトリ指定時のみ。評価モデルへ送信したメタデータそのもの |
+| `evaluator` | 判定した評価モデル。`name`（`jev` / `clef`）、`host`（`typesafe` / `workers-ai` / `local`）、`models.assess`（1回目に要求したモデル）、`models.select`（2回目）。URL・アカウントID・秘密は含めない。この項目が無い旧JSONはJevとして扱う |
 | `assessment` | 評価軸ごとの選択、全確率分布、confidence |
 | `recommendations` | 各社のモデル、推論設定、API設定抜粋、判断、出典 |
-| `jev_calls` | 実際に評価したJevのモデル名と各呼び出しのusage |
+| `jev_calls` | 評価モデルの呼び出し記録。実際に応答したモデル名と各呼び出しのusage（Clefでも同じ名前。`schema_version` 1の互換のため） |
 | `status` | `selected`（3社選定）/ `partial`（一部保留）/ `needs_context`（情報不足） |
-| `warnings` | 未校正、利用面の違い、カタログ確認期限など |
+| `warnings` | 未校正、利用面の違い、カタログ確認期限、Clefの未校正・入力切り詰めの可能性など |
 
 `api_parameters` は設定の抜粋です。入力・max_tokens等を含む完全なリクエストではありません。
 `value` / `total-cost` / `min-cost` / `max-quality` の選定済み候補には `policy_guidance` を追加します。
@@ -122,7 +133,7 @@ OPENAI_API_KEY=... ANTHROPIC_API_KEY=... XAI_API_KEY=... issue-model-catalog    
 OPENAI_API_KEY=... ANTHROPIC_API_KEY=... XAI_API_KEY=... issue-model-catalog --write  # カタログへ追加
 ```
 
-実際にはシェル履歴に残らないよう、[ローカル手順](local.md#jev認証)と同じ非表示入力で環境変数を設定してください。
+実際にはシェル履歴に残らないよう、[ローカル手順](local.md#評価モデルと認証)と同じ非表示入力で環境変数を設定してください。
 
 - **提案の対象**: `issue_router/model_watch.json` の `include` に合い、`exclude`（音声・画像・埋め込みなど）に当たらないIDです。
   日付付きスナップショットは除きます。カタログにも `ignored` にも無いものは、作成日に関係なくすべて提案します。
@@ -166,20 +177,23 @@ APIとCodex/Claude Code/GrokのUIでは対応設定が異なり得ます。
 過去Issueについて次を記録し、実際の結果と比較します。
 
 - 入力Issueと補足情報（別途アクセス制御された保存先）
-- カタログ/ポリシー版、Jevの実モデル、推薦と分布
+- カタログ/ポリシー版、評価モデル（結果JSONの `evaluator` と `jev_calls[].model`）、推薦と分布
 - 人が採用したモデルと設定、完了の可否、必要な手戻り
 - テスト結果、処理時間、実測コスト
 
-Jevのconfidenceは判定分布の集中度で、実装成功率ではありません。
+JevとClefのconfidenceは判定分布の集中度で、実装成功率ではありません。
+JevとClefの比較は、同じIssueを両方で評価して結果を並べます（送る本文は `model` 以外同一です）。
 閾値や能力段階を調整する場合は、その用途のデータで検証してください。
 
 ## データと認証
 
-- TypeSafeへ送るのは指定されたIssueのタイトル・本文・明示したコンテキストと選定用情報です。
+- 評価モデル（TypeSafe、Cloudflare Workers AI、または指定したClefサーバー）へ送るのは、指定されたIssueのタイトル・本文・明示したコンテキストと選定用情報です。
 - 結果に入力本文を複製しません。入力ハッシュは匿名化の保証ではありません。
 - キー・Tokenは環境変数/Keychainから読みます。コードやテストに保存しません。
-- Jev URLは固定HTTPSで、認証情報を別ホストへ転送しないようHTTP redirectを拒否します。
-- リトライで意図せず課金を増やさないため、Jevの自動再試行はしません。
+- Jev・Workers AIのURLは固定HTTPSです。ClefのローカルURLはloopbackのhttpかhttpsだけを受け付けます。
+  いずれも認証情報を別ホストへ転送しないようHTTP redirectを拒否します。
+- エラー表示に応答本文を含めません。Workers AIの失敗は数値のエラーコードだけを表示します。
+- リトライで意図せず課金を増やさないため、評価モデルの自動再試行・自動切替はしません。
 - APIが失敗した場合、ローカル推測へのフォールバックはありません。
 - GitHub取得は `github.com` 固定でシェル展開せずに `gh` を呼び出します。
 
@@ -195,7 +209,7 @@ actionlint
 ```
 
 通常のCIはPython 3.10 / 3.12 / 3.14でテスト、lint、パッケージ生成を行います。
-GitHub Actions構文はactionlintで確認します。Jev・GitHub・Slackの書き込みはモックです。
+GitHub Actions構文はactionlintで確認します。Jev・Clef・GitHub・Slackの通信と書き込みはモックです。
 
 実APIの疎通は明示的に次を実行します。TypeSafeへの送信とAPI利用料が発生します。
 
@@ -216,6 +230,10 @@ Issueコメント/コードの自動収集、推薦先モデルの実行、価�
 ## 公式資料
 
 - [Jev API](https://docs.typesafe.ai/api)
+- [Clef（Workers AI）](https://developers.cloudflare.com/workers-ai/models/clef/)
+- [Workers AI REST API](https://developers.cloudflare.com/workers-ai/get-started/rest-api/)
+- [Clef公開のchangelog](https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/)
+- [Clef（Ollama）](https://ollama.com/library/clef)
 - [OpenAIモデル一覧](https://developers.openai.com/api/docs/models)
 - [Claudeモデル一覧](https://platform.claude.com/docs/en/models/overview)
 - [Claude effort](https://platform.claude.com/docs/en/build-with-claude/effort)

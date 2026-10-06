@@ -18,7 +18,7 @@ import threading
 import time
 import webbrowser
 
-from .core import RouterError, evaluate, load_catalog, normalize_issue, render, route
+from .core import RouterError, evaluate, load_catalog, make_evaluator, normalize_issue, render, route
 from .github import fetch_issue
 from .policies import POLICIES, POLICY_DESCRIPTIONS
 from .repo import snapshot
@@ -247,7 +247,8 @@ def handle_route(data, call_route=route, fetch=fetch_issue, inspect=snapshot):
     repo = str(data.get("repo") or "").strip()
     repository = inspect(repo, "\n".join(issue.values())) if repo else None
     result = call_route(issue, catalog=load_catalog(os.getenv("ISSUE_MODEL_CATALOG")), policy=policy,
-                        jev_model=os.getenv("JEV_MODEL", "jev-latest"), repository=repository)
+                        evaluator=make_evaluator("jev", jev_model=os.getenv("JEV_MODEL", "jev-latest")),
+                        repository=repository)
     return {"result": result, "text": render(result)}
 
 
