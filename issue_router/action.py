@@ -29,6 +29,7 @@ def run(environ=None, *, fetch=fetch_issue, select=route, publish=publish_commen
     add_routing_arguments(parser)
     args = parser.parse_args([])
     args.policy = env.get("ISSUE_MODEL_POLICY") or "balanced"
+    args.evaluator = "jev"  # Clef inputs and their secret checks arrive with the action.yml change
     args.jev_model = env.get("JEV_MODEL") or "jev-latest"
     args.catalog = env.get("ISSUE_MODEL_CATALOG") or None
     options = routing_options(args)

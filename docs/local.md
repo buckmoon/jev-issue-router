@@ -3,7 +3,9 @@
 ## 必要なもの
 
 - Python 3.10以降（macOS / Linux。WindowsではPython CLI自体は利用可能ですが未検証）
-- TypeSafe/JevのAPIキー
+- 評価モデルの利用手段のいずれか（[評価モデルと認証](#評価モデルと認証)）
+  - TypeSafe/JevのAPIキー（既定）
+  - Clefを使う場合: CloudflareのアカウントIDとWorkers AIのAPIトークン、または手元のOllama等
 - GitHub Issue URLを読む場合のみ、GitHub CLI `gh` と対象Issueの閲覧権限
 
 OpenAI・Anthropic・xAIのAPIキーは不要です。推薦するモデルは実行しません。
@@ -33,9 +35,27 @@ issue-model --help
 
 ソースを編集しない利用者は `pip install .` でも使えます。PyPIには公開していません。
 
-## Jev認証
+## 評価モデルと認証
 
-認証の優先順位は次のとおりです。
+Issueを判定する評価モデルは、TypeSafeの **Jev**（既定）と、Cloudflareの **Clef** から選べます。
+どちらにも同じ質問（評価軸・方針・候補）を、`model` 以外は同一の本文で送ります。推薦対象のカタログは共通です。
+
+| 評価モデル / ホスト | 指定 | Issue本文などの送信先 | 認証 | 課金 |
+| --- | --- | --- | --- | --- |
+| Jev / typesafe | 既定（`--evaluator jev`） | TypeSafe | `TYPESAFE_API_KEY` / Keychain `local.jev.typesafe` | TypeSafe |
+| Clef / workers-ai | `--evaluator clef` | Cloudflare Workers AI | `CLOUDFLARE_API_TOKEN` / Keychain `local.clef.cloudflare`、`CLOUDFLARE_ACCOUNT_ID` | Cloudflare |
+| Clef / local | `--evaluator clef --clef-host local` | 指定したサーバー（既定はこのPCのloopback。外部送信なし） | 任意の `CLEF_API_KEY` | なし（自前の計算資源） |
+
+- JevとClefの間で自動フォールバック・自動再試行はしません。失敗はそのままエラーになり、推薦は出しません。
+- 評価軸・方針・候補の説明はJevで動作確認したものです。Clefでは未校正のため、結果に「未校正」の警告を付けます。
+- どの評価モデル・どのモデル名で判定したかは、結果JSONの `evaluator`（`name`、`host`、`models.assess`、`models.select`）と
+  `jev_calls[].model` で確認できます。`jev_calls` は名前を互換のため残しており、Clefでも評価モデルの呼び出し記録です。
+- 認証情報は最初のAPI呼び出し時に読みます。`--help` や設定エラーの段階ではKeychainを読みません。
+  アカウントID・URL・モデル名などの秘密でない設定は、GitHubやAPIへアクセスする前に検証します。
+
+### Jev（既定）
+
+Issueの評価はTypeSafeのJevで行います。認証の優先順位は次のとおりです。
 
 1. `TYPESAFE_API_KEY` 環境変数
 2. macOS Keychainのサービス `local.jev.typesafe`、アカウント名がログインユーザーの項目
@@ -63,6 +83,72 @@ printf '\n'
 
 これらの環境変数は、そのターミナルから起動するプロセスにだけ引き継がれます。
 環境変数ファイルの自動読み込みはしません。キー未設定・Keychain拒否時はエラー終了します。
+
+### Clef（Cloudflare Workers AI）
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=<32桁の16進数のアカウントID>
+read -rs 'CLOUDFLARE_API_TOKEN?Cloudflare API token: '; export CLOUDFLARE_API_TOKEN; echo
+issue-model --file examples/issue.json --evaluator clef
+```
+
+- アカウントIDは32桁の16進数です。秘密ではありませんが、結果JSONには入れません。
+- APIトークンは `CLOUDFLARE_API_TOKEN` 環境変数、次にmacOS Keychainのサービス `local.clef.cloudflare`
+  （アカウント名はログインユーザー）の順に探します。
+- トークンの権限は対象アカウントのWorkers AIだけに絞ってください。公式のREST手順は「Workers AI - Read」と
+  「Workers AI - Edit」の両方を案内しています。Readだけで評価できるかは未確認です。
+- 料金は入力100万トークンあたり `clef` $0.24、`clef-flash` $0.09（出力課金なし。2026-10時点の公表値）。
+  Workers AIへの送信はCloudflareの利用規約・ログ設定に従います。
+- タイムアウトは既定60秒です。
+
+### Clef（このPC内のサーバー: Ollama / vLLM / llama.cpp）
+
+```sh
+ollama pull clef-flash          # 約12GB。clef（27B）は18GB〜
+issue-model --file examples/issue.json --evaluator clef --clef-host local --clef-model clef-flash
+```
+
+- Ollamaは0.35.1以降が必要です。既定のURLは `http://127.0.0.1:11434/v1/systemone` です。
+  別のサーバーは `--clef-url` / `CLEF_URL` で指定します。
+- URLは **loopbackのhttp**（`127.0.0.1`、`localhost`、`::1`）か **https** だけを受け付けます。query・fragment付きは不可です。
+  LAN上のGPUマシンを使う場合はTLSで終端してください（例: Cloudflare Tunnelや自前のTLS終端）。HTTPリダイレクトは拒否します。
+- local では `--clef-model` にOllamaのタグ（例: `clef:27b-q8_0`）も指定できます。
+- サーバーがキーを要求する場合だけ `CLEF_API_KEY` を設定すると、Bearerトークンとして付けます。
+- 初回のモデル読み込みが遅いため、タイムアウトは既定300秒です。`CLEF_TIMEOUT`（10〜600秒）で変更できます。
+- メモリの目安: `clef-flash` は約12GB（16GB以上のMacで現実的）、`clef` は約18GB（q4）〜55GB（bf16）で32GB以上を推奨。
+
+### clef と clef-flash の使い分け
+
+評価は2段階です。1回目（評価段階）で情報の充足・評価軸・文脈をチェックし、2回目（選定段階）で方針に沿って
+各社のモデルと推論設定を選びます。`--clef-model` は選定段階のモデルで、評価段階の既定にもなります。
+`--clef-assess-model` を指定すると評価段階だけ別のモデルにできます。
+
+| 名前 | 評価段階 | 選定段階 | 指定 |
+| --- | --- | --- | --- |
+| 精度優先（既定） | clef | clef | `--clef-model clef`（省略可） |
+| 高速 | clef-flash | clef-flash | `--clef-model clef-flash` |
+| 段階分け | clef-flash | clef | `--clef-model clef --clef-assess-model clef-flash` |
+
+以下は校正前の仮説です。合成Issueと実Issueでの比較を経て見直します。
+
+| 用途 | 推奨 |
+| --- | --- |
+| 選定段階（方針文と候補説明を読み分けて最大16択から選ぶ） | `clef` |
+| 評価段階（2〜5択の短い分類×9問） | `clef-flash` でも可 |
+| 対話的な利用で待ち時間を減らしたい | 段階分け、または高速 |
+| 多数のIssueをまとめて処理 | 高速（保留・暫定は人が後で見直す前提） |
+| `max-quality` / `total-cost` など判断の重い方針 | 精度優先 |
+| 手元のMac（Ollama） | メモリ16GBなら `clef-flash`、32GB以上なら `clef` |
+
+公表されているレイテンシ・ベンチマークはCloudflare自身の値で、このツールでの精度を示すものではありません。
+
+### Clefで知っておくこと
+
+- Clefは長い入力をトークン上限（65,536）に合わせて**黙って切り詰めます**。応答の `usage.input_tokens` が上限の90%以上なら、
+  結果に警告を付けます。警告が出たら本文を要約して再評価してください。入力の60,000文字上限はJevと同じです。
+- Clefは確率が完全に同点のとき、選択肢の並び順で先のものを選びます。選定段階の質問は「選定保留」を先頭に置いているため、
+  完全同点のときだけ保留になります。確率は結果に表示されます。
+- confidenceは分布の集中度で、正しさや実装成功の確率ではありません（Jevと同じ）。
 
 ## 入力方法
 
@@ -109,7 +195,7 @@ cat task.md | issue-model --text -
 issue-model https://github.com/OWNER/REPO/issues/123 --context context.md
 ```
 
-指定したファイルもJevへ送信されます。これはJSONの `context` を置き換えます。
+指定したファイルも評価モデル（Jev / Clef）へ送信されます。これはJSONの `context` を置き換えます。
 関連する仕様・対象コンポーネント・完了条件など、選定に必要な内容だけを入れてください。
 
 ### リポジトリの状態を判断材料に加える
@@ -120,7 +206,7 @@ issue-model --text 'Webhook再送時の二重課金を直す' --repo .
 ```
 
 `--repo` には、作業対象のローカルのGit clone（サブフォルダでも可）を指定します。
-次の**メタデータだけ**を収集し、Issueと一緒にJevへ送信します。ファイルの中身は読みません。
+次の**メタデータだけ**を収集し、Issueと一緒に評価モデルへ送信します。ファイルの中身は読みません。
 
 | 項目 | 内容 |
 | --- | --- |
@@ -197,11 +283,22 @@ issue-model --file examples/issue.json --format json --output result.json
 | 環境変数 | CLI引数 | 既定値 |
 | --- | --- | --- |
 | `ISSUE_MODEL_POLICY` | `--policy` | `balanced` |
-| `JEV_MODEL` | `--jev-model` | `jev-latest` |
+| `ISSUE_MODEL_EVALUATOR` | `--evaluator {jev,clef}` | `jev` |
+| `JEV_MODEL` | `--jev-model` | `jev-latest`（`jev` のときだけ使う） |
+| `CLEF_HOST` | `--clef-host {workers-ai,local}` | `workers-ai` |
+| `CLEF_MODEL` | `--clef-model` | `clef`（選定段階。評価段階の既定にもなる。workers-aiは `clef` / `clef-flash` のみ） |
+| `CLEF_ASSESS_MODEL` | `--clef-assess-model` | `CLEF_MODEL` と同じ（評価段階だけ別モデルにする） |
+| `CLEF_URL` | `--clef-url` | `http://127.0.0.1:11434/v1/systemone`（local のとき） |
+| `CLEF_TIMEOUT` | （なし） | workers-ai 60秒 / local 300秒（10〜600の整数） |
+| `CLOUDFLARE_ACCOUNT_ID` | （なし） | なし（workers-aiで必須） |
+| `CLOUDFLARE_API_TOKEN` | （なし） | なし（workers-aiで必須。次にKeychain `local.clef.cloudflare`） |
+| `CLEF_API_KEY` | （なし） | なし（localサーバーがキーを要求する場合だけ） |
 | `ISSUE_MODEL_CATALOG` | `--catalog` | 同梱カタログ |
 
 CLI引数が環境変数より優先します。Slackプロセスにも同じ設定を適用できます。
+`--evaluator jev` のときClef系の設定は無視し、`--evaluator clef` のとき `--jev-model` は無視します。
 Jevのモデル名を固定する場合は、その時点でアカウントから利用できるIDを指定します。
+macOSアプリ・Slack・GitHub Actionでの評価モデルの切り替えは今後対応します（現在はJev固定）。
 
 ## 他のCodexセッションから使う
 
@@ -254,10 +351,17 @@ macOS Keychain項目は既存Jev連携と共用するため、本ツールの削
 | コマンドが見つからない | `.venv/bin/issue-model` を直接実行するかPATHを設定 |
 | Jev HTTP 401/403 | APIキー、アカウントのAPI利用権限 |
 | Jev HTTP 429 | 利用制限・残高などTypeSafe側の状態。自動再試行はしません |
+| `Set CLOUDFLARE_ACCOUNT_ID` | `--evaluator clef` でアカウントIDが未設定か形式違い（32桁の16進数） |
+| Clef HTTP 400 | モデル名（workers-aiは `clef` / `clef-flash`）、入力の上限 |
+| Clef HTTP 401/403 | `CLOUDFLARE_API_TOKEN` の値、トークンのWorkers AI権限と対象アカウント |
+| `Clef request failed (Cloudflare error codes [...])` | Workers AIが失敗を返した状態。数値コードだけを表示し、メッセージ本文は表示しません |
+| Clef network/timeout/JSON error（local） | Ollama等が起動しているか、`--clef-url`、モデルを `ollama pull` 済みか。初回は読み込みに時間がかかります |
+| `CLEF_URL must be a loopback http URL or an https URL` | LAN上のhttpは不可。httpsで終端するか、このPCのloopbackを使う |
+| 「コンテキスト上限に近づいています」と表示 | Clefが入力を切り詰めた可能性があります。本文やコンテキストを要約して再評価 |
 | GitHub request failed | `gh auth status`、対象repo/Issueの閲覧権限、組織SSO |
 | 「暫定の選定です」と表示 | 目的は読み取れたが、現状・対象・完了条件のいずれかが本文に無い状態。推薦は出ます。補足して再評価すると確度が上がる |
-| 一部の会社だけ選定保留（`partial`） | その会社についてJevが候補を1つに絞れなかった状態。他社の結果は有効。確率が割れた上位5候補を内訳として表示します（推薦ではありません。JSONでは `top_candidates`）。対象や規模を補足すると解消しやすい |
-| 情報不足・選定保留 | 何をしたいのか（目的）が読み取れない状態。結果に「Jevが不足と判断した情報」（目的・現状・対象・完了条件）が出ます。その項目を本文か `--context` に補足。JSONでは `missing_context` |
+| 一部の会社だけ選定保留（`partial`） | その会社について評価モデルが候補を1つに絞れなかった状態。他社の結果は有効。確率が割れた上位5候補を内訳として表示します（推薦ではありません。JSONでは `top_candidates`）。対象や規模を補足すると解消しやすい |
+| 情報不足・選定保留 | 何をしたいのか（目的）が読み取れない状態。結果に「Jevが不足と判断した情報」（Clefでは「Clefが…」。目的・現状・対象・完了条件）が出ます。その項目を本文か `--context` に補足。JSONでは `missing_context` |
 | Issueの語に一致するパスが0 | 照合は英字の語で行います。日本語だけの本文では一致しません。ファイル名・機能名・クラス名を本文に含める |
 | 次候補の確率も高い | 判定が分散しています。追加情報や実タスク評価で比較 |
 | カタログ確認から30日超 | [カタログ更新手順](architecture.md#カタログを更新する)を実施 |

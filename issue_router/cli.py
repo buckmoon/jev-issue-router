@@ -9,15 +9,15 @@ from .settings import add_routing_arguments, routing_options
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Jev selects model/effort pairs for OpenAI, Claude and Grok")
+    parser = argparse.ArgumentParser(description="Jev or Clef selects model/effort pairs for OpenAI, Claude and Grok")
     parser.add_argument("url", nargs="?", help="GitHub Issue URL (same as --issue)")
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--issue", help="GitHub Issue URL; reads title and body only")
     source.add_argument("--file", help="Issue JSON {title, body, context}; '-' reads stdin")
     source.add_argument("--text", help="Plain Issue text; '-' reads stdin")
-    parser.add_argument("--context", help="Explicit UTF-8 context file to send to Jev")
+    parser.add_argument("--context", help="Explicit UTF-8 context file to send to the evaluator")
     parser.add_argument("--repo", metavar="PATH", help="Local Git clone; sends its metadata (structure, tests, CI, "
-                        "Git state, matching paths) to Jev. File contents are not read")
+                        "Git state, matching paths) to the evaluator. File contents are not read")
     add_routing_arguments(parser)
     parser.add_argument("--format", choices=["text", "json", "slack"], default="text")
     parser.add_argument("--output", help="Write result to a UTF-8 file instead of stdout")
