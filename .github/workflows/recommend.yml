@@ -15,6 +15,11 @@ on:
         type: choice
         options: [balanced, quality, cost, value, total-cost, min-cost, max-quality]
         default: balanced
+      evaluator:
+        description: Decision model that judges the issue (jev = TypeSafe, clef = Cloudflare Workers AI)
+        type: choice
+        options: [jev, clef]
+        default: jev
 permissions:
   contents: read
   issues: write
@@ -35,4 +40,7 @@ jobs:
           issue-number: ${{ inputs.issue_number }}
           policy: ${{ inputs.policy }}
           post-comment: ${{ inputs.post_comment }}
+          evaluator: ${{ inputs.evaluator }}
           typesafe-api-key: ${{ secrets.TYPESAFE_API_KEY }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

@@ -9,11 +9,14 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 
-from issue_router import action, cli
+from issue_router import action, cli, slack
 from issue_router.core import RouterError, load_catalog, route, validate_response
 from issue_router.github import COMMENT_MARKER, publish_comment
 from issue_router.slack import RecentRequests, handle_command, parse_command
 from test_router import FakeJev
+
+ACCOUNT = '0123456789abcdef0123456789abcdef'  # obviously fake
+CF_TOKEN = 'cf_example_not_a_real_token'
 
 
 class CliTests(unittest.TestCase):
@@ -88,6 +91,7 @@ class ActionTests(unittest.TestCase):
             with self.subTest(post=post), tempfile.TemporaryDirectory() as directory:
                 env = {'GITHUB_REPOSITORY': 'o/r', 'ROUTER_ISSUE_NUMBER': '1',
                        'ROUTER_POST_COMMENT': post, 'RUNNER_TEMP': directory,
+                       'TYPESAFE_API_KEY': 'ts_example_not_a_real_key',
                        'GITHUB_STEP_SUMMARY': directory + '/summary',
                        'GITHUB_OUTPUT': directory + '/output'}
                 issue = {'body': 'Update label with explicit UI test'}
@@ -102,6 +106,76 @@ class ActionTests(unittest.TestCase):
                 result = json.loads(Path(outputs['result-path']).read_text())
                 self.assertEqual(set(result['recommendations']), {'openai', 'claude', 'grok'})
 
+    def action_env(self, directory, **extra):
+        return {'GITHUB_REPOSITORY': 'o/r', 'ROUTER_ISSUE_NUMBER': '1', 'RUNNER_TEMP': directory,
+                'GITHUB_STEP_SUMMARY': directory + '/summary', 'GITHUB_OUTPUT': directory + '/output', **extra}
+
+    def test_missing_evaluator_secret_stops_before_fetch(self):
+        cases = [({'TYPESAFE_API_KEY': ''}, 'TYPESAFE_API_KEY'),
+                 ({'ISSUE_MODEL_EVALUATOR': 'clef', 'CLOUDFLARE_ACCOUNT_ID': ACCOUNT,
+                   'CLOUDFLARE_API_TOKEN': '', 'TYPESAFE_API_KEY': 'ts_example_not_a_real_key'},
+                  'CLOUDFLARE_API_TOKEN is required when evaluator is clef'),
+                 ({'ISSUE_MODEL_EVALUATOR': 'clef', 'CLOUDFLARE_ACCOUNT_ID': '',
+                   'CLOUDFLARE_API_TOKEN': CF_TOKEN}, 'CLOUDFLARE_ACCOUNT_ID'),
+                 ({'ISSUE_MODEL_EVALUATOR': 'clef', 'CLOUDFLARE_ACCOUNT_ID': ACCOUNT, 'CLOUDFLARE_API_TOKEN': CF_TOKEN,
+                   'CLEF_MODEL': 'clef:27b'}, 'clef or clef-flash'),
+                 ({'ISSUE_MODEL_EVALUATOR': 'bogus'}, 'ISSUE_MODEL_EVALUATOR')]
+        for extra, message in cases:
+            fetch = Mock()
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory, \
+                    patch.dict(os.environ, {}, clear=True):
+                with self.assertRaisesRegex(RouterError, message):
+                    action.run(self.action_env(directory, **extra), fetch=fetch)
+            fetch.assert_not_called()
+
+    def test_clef_settings_reach_the_engine(self):
+        seen = {}
+
+        def select(issue, **options):
+            seen.update(options)
+            return route(issue, call=FakeJev(), **options)
+
+        env_extra = {'ISSUE_MODEL_EVALUATOR': 'clef', 'CLEF_HOST': 'workers-ai', 'CLEF_MODEL': 'clef',
+                     'CLEF_ASSESS_MODEL': 'clef-flash', 'CLEF_URL': '', 'CLOUDFLARE_ACCOUNT_ID': ACCOUNT,
+                     'CLOUDFLARE_API_TOKEN': CF_TOKEN, 'TYPESAFE_API_KEY': ''}
+        # The account ID comes from the Action's environment, not the test process.
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
+            env = self.action_env(directory, **env_extra)
+            result = action.run(env, fetch=lambda url: {'body': 'Update label'}, select=select, publish=Mock())
+            summary = Path(env['GITHUB_STEP_SUMMARY']).read_text()
+            saved = json.loads(Path(dict(line.split('=', 1) for line in
+                                         Path(env['GITHUB_OUTPUT']).read_text().splitlines())['result-path']).read_text())
+        self.assertEqual((seen['evaluator'].name, seen['evaluator'].host), ('clef', 'workers-ai'))
+        self.assertEqual(result['evaluator']['models'], {'assess': 'clef-flash', 'select': 'clef'})
+        self.assertIn('評価モデル: Clef (workers-ai / clef-flash → clef)', summary)
+        for text in (summary, json.dumps(saved)):
+            self.assertNotIn(ACCOUNT, text)
+            self.assertNotIn(CF_TOKEN, text)
+
+    def test_local_clef_needs_no_token(self):
+        seen = {}
+
+        def select(issue, **options):
+            seen.update(options)
+            return route(issue, call=FakeJev(), **options)
+
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
+            action.run(self.action_env(directory, ISSUE_MODEL_EVALUATOR='clef', CLEF_HOST='local',
+                                       CLEF_MODEL='clef-flash', CLEF_URL='http://127.0.0.1:11434/v1/systemone'),
+                       fetch=lambda url: {'body': 'Update label'}, select=select, publish=Mock())
+        self.assertEqual(seen['evaluator'].host, 'local')
+
+    def test_action_yml_declares_evaluator_inputs(self):
+        text = (Path(__file__).resolve().parent.parent / 'action.yml').read_text(encoding='utf-8')
+        for name in ('evaluator', 'clef-host', 'clef-model', 'clef-assess-model', 'clef-url',
+                     'cloudflare-account-id', 'cloudflare-api-token'):
+            self.assertIn(f'\n  {name}:\n', text)
+        for env in ('ISSUE_MODEL_EVALUATOR', 'CLEF_HOST', 'CLEF_MODEL', 'CLEF_ASSESS_MODEL', 'CLEF_URL',
+                    'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN'):
+            self.assertIn(f'        {env}: ${{{{ inputs.', text)
+        self.assertIn('typesafe-api-key:\n    description: TypeSafe API key, supplied from an Actions Secret '
+                      '(required when evaluator is jev)\n    required: false', text)
+
     def test_injected_issue_number_rejected_before_network(self):
         fetch = Mock()
         with self.assertRaises(RouterError):
@@ -110,6 +184,15 @@ class ActionTests(unittest.TestCase):
 
 
 class SlackTests(unittest.TestCase):
+    def test_main_accepts_evaluator_flags_without_starting(self):
+        env = {'SLACK_ALLOWED_USERS': '', 'GITHUB_ALLOWED_REPOS': ''}
+        with patch.dict(os.environ, env, clear=True):
+            # Valid evaluator settings get past configuration and stop at the Slack allowlists.
+            with self.assertRaisesRegex(SystemExit, 'SLACK_ALLOWED_USERS'):
+                slack.main(['--evaluator', 'clef', '--clef-host', 'local', '--clef-model', 'clef-flash'])
+            with self.assertRaisesRegex(SystemExit, 'CLOUDFLARE_ACCOUNT_ID'):
+                slack.main(['--evaluator', 'clef'])
+
     def test_command_policy_and_slack_link_format(self):
         self.assertEqual(parse_command('<https://github.com/o/r/issues/1|Issue> quality'),
                          ('https://github.com/o/r/issues/1', 'quality'))

@@ -8,17 +8,38 @@ inputs:
     description: Target OWNER/REPO (defaults to the calling repository)
     default: ${{ github.repository }}
   typesafe-api-key:
-    description: TypeSafe API key, supplied from an Actions Secret
-    required: true
+    description: TypeSafe API key, supplied from an Actions Secret (required when evaluator is jev)
+    required: false
   github-token:
     description: GitHub token with Issues read (and write when posting) permission
     default: ${{ github.token }}
   policy:
     description: balanced, quality, cost, value (cheap first attempt), total-cost (including rework), min-cost (lowest spend) or max-quality (top model, design quality first)
     default: balanced
+  evaluator:
+    description: jev (TypeSafe Jev, default) or clef (Cloudflare Clef)
+    default: jev
   jev-model:
-    description: Jev evaluator model ID
+    description: Jev evaluator model ID (used when evaluator is jev)
     default: jev-latest
+  clef-host:
+    description: workers-ai (default) or local (self-hosted runner with a System One server)
+    default: workers-ai
+  clef-model:
+    description: Clef model for the selection stage (clef or clef-flash on Workers AI; any model tag for local)
+    default: clef
+  clef-assess-model:
+    description: Clef model for the assessment stage only (empty = same as clef-model)
+    default: ''
+  clef-url:
+    description: Local System One endpoint for clef-host=local (loopback http or https)
+    default: ''
+  cloudflare-account-id:
+    description: Cloudflare account ID (required when evaluator is clef on Workers AI); pass a repository variable
+    default: ''
+  cloudflare-api-token:
+    description: Cloudflare API token with Workers AI permission, supplied from an Actions Secret
+    default: ''
   catalog:
     description: Optional absolute catalog path on the runner
     default: ''
@@ -38,7 +59,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Evaluate issue with Jev
+    - name: Evaluate issue with Jev or Clef
       id: evaluate
       shell: bash
       env:
@@ -50,5 +71,12 @@ runs:
         ROUTER_POST_COMMENT: ${{ inputs.post-comment }}
         ISSUE_MODEL_POLICY: ${{ inputs.policy }}
         JEV_MODEL: ${{ inputs.jev-model }}
+        ISSUE_MODEL_EVALUATOR: ${{ inputs.evaluator }}
+        CLEF_HOST: ${{ inputs.clef-host }}
+        CLEF_MODEL: ${{ inputs.clef-model }}
+        CLEF_ASSESS_MODEL: ${{ inputs.clef-assess-model }}
+        CLEF_URL: ${{ inputs.clef-url }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
         ISSUE_MODEL_CATALOG: ${{ inputs.catalog }}
       run: python3 -P -m issue_router.action

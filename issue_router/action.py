@@ -29,10 +29,18 @@ def run(environ=None, *, fetch=fetch_issue, select=route, publish=publish_commen
     add_routing_arguments(parser)
     args = parser.parse_args([])
     args.policy = env.get("ISSUE_MODEL_POLICY") or "balanced"
-    args.evaluator = "jev"  # Clef inputs and their secret checks arrive with the action.yml change
+    args.evaluator = env.get("ISSUE_MODEL_EVALUATOR") or "jev"
     args.jev_model = env.get("JEV_MODEL") or "jev-latest"
+    args.clef_host = env.get("CLEF_HOST") or "workers-ai"
+    args.clef_model = env.get("CLEF_MODEL") or "clef"
+    args.clef_assess_model = env.get("CLEF_ASSESS_MODEL") or None
+    args.clef_url = env.get("CLEF_URL") or None
     args.catalog = env.get("ISSUE_MODEL_CATALOG") or None
-    options = routing_options(args)
+    options = routing_options(args, environ=env)  # non-secret settings such as the account ID are checked here
+    evaluator = options["evaluator"]
+    # Runners have no Keychain, so an empty variable means the Secret is missing; stop before GitHub is read.
+    if evaluator.token_required and not env.get(evaluator.token_env):
+        raise RouterError(f"{evaluator.token_env} is required when evaluator is {evaluator.name}")
     url = f"https://github.com/{repo}/issues/{number}"
     result = select(fetch(url), **options)
     report = f"対象: {url}\n\n" + render(result)

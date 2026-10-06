@@ -48,7 +48,7 @@ def parse_command(text):
 
 def handle_command(ack, respond, command, *, allowed_users, allowed_repos, gate,
                    fetch=fetch_issue, select=route, team_id=None, recent=None):
-    ack()  # Acknowledge before GitHub or Jev network I/O.
+    ack()  # Acknowledge before GitHub or evaluator network I/O.
     if command.get("user_id") not in allowed_users or (team_id and command.get("team_id") != team_id):
         respond(text="このコマンドの利用が許可されていません。", response_type="ephemeral")
         return
