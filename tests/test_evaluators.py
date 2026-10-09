@@ -37,6 +37,20 @@ def fake_opener(payload=None, error=None):
     return MagicMock(return_value=opener), opener
 
 
+def with_input_tokens(tokens):
+    fake = FakeJev()
+
+    def reply(request):
+        response = fake(request)
+        response["usage"] = {"input_tokens": tokens, "output_tokens": 0}
+        return response
+    return reply
+
+
+def truncation_warnings(result):
+    return sum("切り詰め" in warning for warning in result["warnings"])
+
+
 class MakeEvaluatorTests(unittest.TestCase):
     def test_default_is_jev_on_typesafe(self):
         evaluator = make_evaluator()
@@ -248,19 +262,41 @@ class RouteTests(unittest.TestCase):
         self.assertEqual([u.rsplit("/", 1)[1] for u in urls], ["clef-flash", "clef"])
 
     def test_context_limit_warning(self):
-        for tokens, warned in ((58982, False), (58983, True)):
-            fake = FakeJev()
+        # 90% of each model's window: clef 65,536 -> 58,982.4; clef-flash 24,576 -> 22,118.4
+        for model, tokens, warned in (("clef", 58982, False), ("clef", 58983, True),
+                                      ("clef-flash", 22118, False), ("clef-flash", 22119, True)):
+            with self.subTest(model=model, tokens=tokens):
+                result = route(ISSUE, call=with_input_tokens(tokens), evaluator=clef(clef_model=model))
+                self.assertEqual(truncation_warnings(result), 1 if warned else 0)
+                jev_result = route(ISSUE, call=with_input_tokens(tokens))
+                self.assertEqual(truncation_warnings(jev_result), 0)
 
-            def reply(request, fake=fake, tokens=tokens):
-                response = fake(request)
-                response["usage"] = {"input_tokens": tokens, "output_tokens": 0}
-                return response
+    def test_long_issue_with_repository_warns_per_stage_model(self):
+        # Near the 60,000-character input limit: fits clef's window but overflows clef-flash's.
+        issue = {"title": "長文Issue", "body": "決済画面の再試行処理を見直す。" * 2400, "context": ""}
+        repository = {"name": "example/app", "files": ["src/pay/retry.ts"], "notes": "再試行の既存仕様。" * 2000}
+        tokens = 30000  # what a truncating clef-flash cannot have read in full
+        cases = (({"clef_model": "clef"}, 0, None),
+                 ({"clef_model": "clef-flash"}, 1, "clef-flash"),
+                 ({"clef_model": "clef", "clef_assess_model": "clef-flash"}, 1, "clef-flash"))
+        for options, count, model in cases:
+            with self.subTest(**options):
+                result = route(issue, call=with_input_tokens(tokens), evaluator=clef(**options),
+                               repository=repository)
+                self.assertEqual(result["repository"], repository)
+                self.assertEqual(truncation_warnings(result), count)
+                if model:
+                    self.assertTrue(any(f"{model}、24,576トークン" in w for w in result["warnings"]))
+        jev_result = route(issue, call=with_input_tokens(tokens), repository=repository)
+        self.assertEqual(truncation_warnings(jev_result), 0)
 
-            with self.subTest(tokens=tokens):
-                result = route(ISSUE, call=reply, evaluator=clef())
-                self.assertEqual(any("切り詰め" in w for w in result["warnings"]), warned)
-                jev_result = route(ISSUE, call=reply)
-                self.assertFalse(any("切り詰め" in w for w in jev_result["warnings"]))
+    def test_local_tags_use_their_model_limit(self):
+        evaluator = make_evaluator("clef", clef_host="local", clef_model="clef:27b-q8_0",
+                                   clef_assess_model="clef-flash:9b", environ={})
+        self.assertEqual(evaluator.context_limit("clef:27b-q8_0"), 65536)
+        self.assertEqual(evaluator.context_limit("clef-flash:9b"), 24576)
+        self.assertIsNone(evaluator.context_limit("my-custom-model"))
+        self.assertIsNone(make_evaluator().context_limit("jev-latest"))
 
     def test_evaluator_failure_has_no_fallback(self):
         def unavailable(request):

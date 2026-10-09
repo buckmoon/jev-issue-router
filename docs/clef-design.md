@@ -35,7 +35,7 @@
 | 質問数 | 1〜64 / リクエスト。ID は英数字・`_`・`.`・`-`、100 文字以内 | [schema-in] |
 | choice の選択肢数 | 2〜255（Jev と同じ上限。カタログの 254 組 + 保留 1 組の制限はそのまま使える） | [schema-in] |
 | score の段階 | 2〜10 | [schema-in] |
-| コンテキスト | 65,536 トークン。「長い state はモデルのトークン上限に合わせて切り詰められる」（無断切り詰め） | [clef-model] [schema-in] |
+| コンテキスト | clef 65,536 トークン、clef-flash 24,576 トークン。「長い state はモデルのトークン上限に合わせて切り詰められる」（無断切り詰め） | [clef-model] [clef-flash-model] [schema-in] |
 | 画像 | 最大 4 枚（PNG/JPEG/WebP、各 4 MiB、合計 8 MiB、本文 13 MiB）。Jev にない拡張 | [schema-in] |
 | 応答 `usage` | `input_tokens`, `output_tokens` | [schema-out] |
 | 料金 | clef $0.24 / clef-flash $0.09（入力 100 万トークンあたり、出力課金なし）。Jev は $0.042 | [ai-tldr] [classmethod] |
@@ -46,6 +46,7 @@
 
 [changelog]: https://developers.cloudflare.com/changelog/post/2026-10-01-clef-workers-ai/
 [clef-model]: https://developers.cloudflare.com/workers-ai/models/clef/
+[clef-flash-model]: https://developers.cloudflare.com/workers-ai/models/clef-flash/
 [rest-api]: https://developers.cloudflare.com/workers-ai/get-started/rest-api/
 [schema-in]: https://developers.cloudflare.com/workers-ai/models/clef/schema-input.json
 [schema-out]: https://developers.cloudflare.com/workers-ai/models/clef/schema-output.json
@@ -106,11 +107,12 @@ Jev との差分のうち設計に影響するものは 5 つです。(1) 応答
 
 ### 4.1 clef と clef-flash の使い分け（適性マップ）
 
-両モデルは同じ API と同じ上限（64K トークン、255 選択肢、64 質問、画像 4 枚）を持ち、違いは規模・速度・料金です。
+両モデルは同じ API と同じ上限（255 選択肢、64 質問、画像 4 枚）を持ちます。違いは規模・速度・料金と、コンテキスト（clef 65,536 / clef-flash 24,576 トークン）です。
 公表値は Cloudflare 自社のベンチマークなので、本ツールでの適性は**校正前の仮説**として扱い、合成 Issue と実 Issue で確かめます。
 
 | | clef（27B） | clef-flash（9B） |
 | --- | --- | --- |
+| コンテキスト | 65,536 トークン | 24,576 トークン（長文 Issue やリポジトリ情報では切り詰められやすい） |
 | 料金（入力 100 万トークン） | $0.24 | $0.09 |
 | モデル側の中央値レイテンシ（公表値） | 209 ms | 39 ms（Jev は 524 ms） |
 | 分類ベンチ（公表値） | BANKING77 94.2 / CLINC150 97.4（Jev 79.7 / 89.3） | 公式は「低遅延に最適化」と説明。精度の公表値は本設計時点で未確認 |
@@ -121,7 +123,7 @@ Jev との差分のうち設計に影響するものは 5 つです。(1) 応答
 | 処理 | 推奨 | 根拠 |
 | --- | --- | --- |
 | 選定段階（2 回目。方針文を読み分け、最大 16 択から 1 組を選ぶ） | `clef` | 方針ごとの長い指示と候補説明の読み分けが必要。判定の質を優先 |
-| 評価段階（1 回目。情報の充足・評価軸・文脈チェックの 2〜5 択 × 9 問） | `clef-flash` でも可 | 短い基準に対する分類で、flash の設計目的（低遅延）に合う。保留（`needs_context`）の判定を速く安く回せる |
+| 評価段階（1 回目。情報の充足・評価軸・文脈チェックの 2〜5 択 × 9 問） | `clef-flash` でも可（短い Issue のとき） | 短い基準に対する分類で、flash の設計目的（低遅延）に合う。保留（`needs_context`）の判定を速く安く回せる。ただしコンテキストは 24,576 トークンで、長文 Issue やリポジトリ情報付きでは切り詰めの警告が出やすい |
 | 疎通確認 | 設定中のモデル（段階で違えば両方） | キーだけでなく、そのモデルを使えるかを確かめる |
 | Slack の対話利用 | 段階分け（flash → clef）または高速（flash / flash） | 応答待ち時間が体験に直結する |
 | ラベル実行の CI で多数の Issue を処理 | 高速（flash / flash） | 料金と速度。保留・暫定が多くても人が後で見直す前提 |
@@ -173,7 +175,7 @@ JEV_URL = "https://api.typesafe.ai/v1/systemone"
 WORKERS_AI_URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/@cf/cloudflare/{model}"
 WORKERS_AI_MODELS = ("clef", "clef-flash")
 LOCAL_URL = "http://127.0.0.1:11434/v1/systemone"
-CLEF_CONTEXT_TOKENS = 65536          # Clef truncates long state silently; see Evaluator.context_tokens
+CLEF_CONTEXT_TOKENS = {"clef": 65536, "clef-flash": 24576}  # per model; see Evaluator.context_limit
 TIMEOUTS = {"typesafe": 60, "workers-ai": 60, "local": 300}
 KEYCHAIN = {"jev": "local.jev.typesafe", "clef": "local.clef.cloudflare"}
 ACCOUNT_ID = re.compile(r"[0-9a-f]{32}")
@@ -348,20 +350,21 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
         result["warnings"].append("評価モデルはClefです。評価軸・方針・候補の説明はJevで動作確認したもので、"
                                   "Clefでは未校正です。Jevと同じ結果になる保証はありません。")
 
-    def record(response):   # 1 回目・2 回目の両方で使う
+    def record(response, model):   # 1 回目は models["assess"]、2 回目は models["select"] を渡す
         usage = response.get("usage")
         result["jev_calls"].append({"model": response.get("model"), "usage": usage})
         tokens = usage.get("input_tokens") if isinstance(usage, dict) else None
-        if (evaluator.context_tokens and isinstance(tokens, int)
-                and tokens >= evaluator.context_tokens * 0.9):
-            result["warnings"].append("入力が評価モデルのコンテキスト上限に近づいています。Clefは長い入力を黙って"
-                                      "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。")
+        limit = evaluator.context_limit(model)   # clef 65,536 / clef-flash 24,576。Jev・不明なタグは None
+        if limit and isinstance(tokens, int) and tokens >= limit * 0.9:
+            ...  # 「入力が評価モデル（clef-flash、24,576トークン）のコンテキスト上限に近づいています。…」を 1 モデル 1 回だけ追加
 ```
 
 - 既存の kwarg `jev_model` は廃止し、`evaluator` に置き換えます。呼び出し元は `settings.routing_options` と
   `app.handle_route` の 2 箇所です。`route(issue, call=FakeJev())` という既存テストの書き方はそのまま動きます。
-- `MAX_INPUT_CHARS`（60,000 文字）は変えません。Clef の 64K トークンは Jev の 32K より大きいものの、日本語 60,000 文字は
-  トークン換算で上限に近づき得るため、上記の `usage` ベースの警告で「無断切り詰め」を可視化します。
+- `MAX_INPUT_CHARS`（60,000 文字）は変えません。clef の 64K トークンは Jev の 32K より大きいものの、日本語 60,000 文字は
+  トークン換算で上限に近づき得ます。clef-flash の 24,576 トークンは容易に超えます。上限は段階ごとに送ったモデルで引き、
+  上記の `usage` ベースの警告で「無断切り詰め」を可視化します（段階分けでは評価段階の clef-flash だけが警告され得る）。
+  ローカルの Ollama タグは `:` より前（`clef-flash:9b` → `clef-flash`）で引き、表にない名前は警告しません。
 - `validate_catalog` の「254 組 + 保留 1 組」の上限は Clef でも同じ（255 選択肢）なので変更しません。
 - 質問数（1 回目 9 問、2 回目 3 問）は Clef の上限 64 の範囲内です。将来の増加に備え、`route()` で
   `len(questions) <= 64` を assert ではなく `RouterError` で検証する 1 行を加えます（Jev にも害はない）。

@@ -118,15 +118,18 @@ enum Router {
                 + "Clefでは未校正です。Jevと同じ結果になる保証はありません。")
         }
         var calls: [JSONValue] = []
-        func record(_ response: JSONValue) {
+        /// `model` is the one sent for this stage, not the response's echo.
+        func record(_ response: JSONValue, model: String) {
             calls.append(call(response))
-            if let limit = evaluator.contextTokens, case let .int(tokens) = response["usage"]?["input_tokens"] ?? .null,
-               Double(tokens) >= Double(limit) * 0.9 {
-                warnings.append("入力が評価モデルのコンテキスト上限に近づいています。Clefは長い入力を黙って"
-                    + "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。")
-            }
+            guard let limit = evaluator.contextLimit(for: model),
+                  case let .int(tokens) = response["usage"]?["input_tokens"] ?? .null,
+                  Double(tokens) >= Double(limit) * 0.9 else { return }
+            let warning = "入力が評価モデル（\(model)、\(limit.formatted(.number.locale(Locale(identifier: "en_US"))))トークン）"
+                + "のコンテキスト上限に近づいています。Clefは長い入力を黙って"
+                + "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。"
+            if !warnings.contains(warning) { warnings.append(warning) }
         }
-        record(first)
+        record(first, model: evaluator.assessModel)
         if Policies.topModel.contains(policy) {
             warnings.append("この方針はモデルを各社の最上位（カタログの最後）に固定します。\(evaluator.label)が選んだのは推論設定です。")
         }
@@ -215,7 +218,7 @@ enum Router {
         }
         let second = try await evaluate(request(model: evaluator.selectModel, state: state, questions: selectionQuestions))
         let selections = try validate(second, questions: selectionQuestions)
-        record(second)
+        record(second, model: evaluator.selectModel)
 
         var recommendations: [(String, JSONValue)] = []
         var chosen: [Bool] = []

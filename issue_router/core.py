@@ -237,16 +237,18 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
         result["warnings"].append("評価モデルはClefです。評価軸・方針・候補の説明はJevで動作確認したもので、"
                                   "Clefでは未校正です。Jevと同じ結果になる保証はありません。")
 
-    def record(response):
+    def record(response, model):  # model: the one sent for this stage, not the response's echo
         usage = response.get("usage")
         result["jev_calls"].append({"model": response.get("model"), "usage": usage})
         tokens = usage.get("input_tokens") if isinstance(usage, dict) else None
-        if (evaluator.context_tokens and type(tokens) is int
-                and tokens >= evaluator.context_tokens * 0.9):
-            result["warnings"].append("入力が評価モデルのコンテキスト上限に近づいています。Clefは長い入力を黙って"
-                                      "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。")
+        limit = evaluator.context_limit(model)
+        warning = (f"入力が評価モデル（{model}、{limit:,}トークン）のコンテキスト上限に近づいています。Clefは長い入力を黙って"
+                   "切り詰めるため、判定が本文の一部だけに基づいた可能性があります。要約して再評価してください。"
+                   if limit else None)
+        if warning and type(tokens) is int and tokens >= limit * 0.9 and warning not in result["warnings"]:
+            result["warnings"].append(warning)
 
-    record(first)
+    record(first, evaluator.models["assess"])
     if policy in TOP_MODEL_POLICIES:
         result["warnings"].append("この方針はモデルを各社の最上位（カタログの最後）に固定します。"
                                   f"{evaluator.label}が選んだのは推論設定です。")
@@ -297,7 +299,7 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
     second = call({"model": evaluator.models["select"], "state": {**evidence, "assessment": assessment,
                   "missing_context": missing, "policy": policy}, "questions": questions})
     selections = validate_response(second, questions)
-    record(second)
+    record(second, evaluator.models["select"])
     for provider, answer in selections.items():
         if provider not in PROVIDERS:
             continue

@@ -21,7 +21,8 @@ JEV_URL = "https://api.typesafe.ai/v1/systemone"
 WORKERS_AI_URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/@cf/cloudflare/{model}"
 WORKERS_AI_MODELS = ("clef", "clef-flash")
 LOCAL_URL = "http://127.0.0.1:11434/v1/systemone"
-CLEF_CONTEXT_TOKENS = 65536  # Clef truncates long state silently; see Evaluator.context_tokens
+# Context window per Clef model (Cloudflare model pages). Clef truncates long state silently; see context_limit.
+CLEF_CONTEXT_TOKENS = {"clef": 65536, "clef-flash": 24576}
 TIMEOUTS = {"typesafe": 60, "workers-ai": 60, "local": 300}
 KEYCHAIN = {"jev": "local.jev.typesafe", "clef": "local.clef.cloudflare"}
 ACCOUNT_ID = re.compile(r"[0-9a-f]{32}")
@@ -105,11 +106,17 @@ class Evaluator:
     token_env: str | None  # env var holding the bearer token
     keychain: str | None   # Keychain service (macOS) consulted after the env var
     token_required: bool
-    context_tokens: int | None = None  # warn when usage.input_tokens approaches this
+    context_tokens: dict | None = None  # {model name: tokens}; warn when usage.input_tokens approaches it
 
     @property
     def label(self):
         return LABELS[self.name]
+
+    def context_limit(self, model):
+        """Context window for a request's model, or None when unknown (Jev, unrecognised local tags)."""
+        if not self.context_tokens or not isinstance(model, str):
+            return None
+        return self.context_tokens.get(model.split(":", 1)[0])  # local Ollama tags: "clef-flash:9b" -> clef-flash
 
     def describe(self):  # goes into the result JSON; never url, account id or secrets
         return {"name": self.name, "host": self.host, "models": dict(self.models)}
