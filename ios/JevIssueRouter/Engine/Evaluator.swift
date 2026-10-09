@@ -12,7 +12,8 @@ struct Evaluator: Equatable {
     static let jevURL = "https://api.typesafe.ai/v1/systemone"
     static let workersAIURL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/@cf/cloudflare/{model}"
     static let workersAIModels = ["clef", "clef-flash"]
-    static let clefContextTokens = 65536  // Clef truncates long state silently; see contextTokens
+    /// Context window per Clef model (Cloudflare model pages). Clef truncates long state silently; see contextLimit.
+    static let clefContextTokens = ["clef": 65536, "clef-flash": 24576]
     static let timeouts = ["typesafe": 60, "workers-ai": 60]
     static let keychainServices = ["jev": "local.jev.typesafe", "clef": "local.clef.cloudflare"]
     static let defaultJevModel = "jev-latest"
@@ -26,8 +27,6 @@ struct Evaluator: Equatable {
     let timeout: TimeInterval
     /// Workers AI wraps the System One response in {"result": ..., "success": ...}.
     let envelope: Bool
-    /// Warn when usage.input_tokens approaches this.
-    let contextTokens: Int?
 
     var label: String { Self.labels[name] ?? "Jev" }
     var keychainService: String { Self.keychainServices[name] ?? Self.keychainServices["jev"]! }
@@ -36,7 +35,7 @@ struct Evaluator: Equatable {
 
     static func jev(model: String = defaultJevModel) -> Evaluator {
         Evaluator(name: "jev", host: "typesafe", assessModel: model, selectModel: model, urlTemplate: jevURL,
-                  timeout: TimeInterval(timeouts["typesafe"]!), envelope: false, contextTokens: nil)
+                  timeout: TimeInterval(timeouts["typesafe"]!), envelope: false)
     }
 
     /// Mirrors make_evaluator("clef", clef_host="workers-ai"): the assessment model defaults to the selection model.
@@ -50,8 +49,12 @@ struct Evaluator: Equatable {
         }
         let template = workersAIURL.replacingOccurrences(of: "{account}", with: accountID)
         return Evaluator(name: "clef", host: "workers-ai", assessModel: assess, selectModel: model,
-                         urlTemplate: template, timeout: TimeInterval(timeouts["workers-ai"]!), envelope: true,
-                         contextTokens: clefContextTokens)
+                         urlTemplate: template, timeout: TimeInterval(timeouts["workers-ai"]!), envelope: true)
+    }
+
+    /// Warn when usage.input_tokens approaches this; nil for Jev.
+    func contextLimit(for model: String) -> Int? {
+        name == "clef" ? Self.clefContextTokens[model] : nil
     }
 
     /// Goes into the result JSON; never the URL, the account ID or secrets.

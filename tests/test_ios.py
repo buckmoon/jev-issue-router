@@ -75,7 +75,9 @@ class IOSPortTest(unittest.TestCase):
             self.assertIn(f'"{host}": {evaluators.TIMEOUTS[host]}', swift)
         self.assertIn(f'jevURL = "{evaluators.JEV_URL}"', swift)
         self.assertIn(f'workersAIURL = "{evaluators.WORKERS_AI_URL}"', swift)
-        self.assertIn(f"clefContextTokens = {evaluators.CLEF_CONTEXT_TOKENS}", swift)
+        limits = re.search(r"static let clefContextTokens = \[(.*?)\]", swift).group(1)
+        self.assertEqual(dict((m, int(n)) for m, n in re.findall(r'"([^"]+)": (\d+)', limits)),
+                         evaluators.CLEF_CONTEXT_TOKENS)
         self.assertIn(f'cloudflareService = "{evaluators.KEYCHAIN["clef"]}"', source("Services/Keychain.swift"))
         client = source("Engine/SystemOneClient.swift")
         for text in ("Cloudflare error codes", "response body omitted", "NoRedirect", "evaluator.envelope"):
