@@ -8,6 +8,25 @@ enum Rubrics {
         Judge only the evidence supplied; do not assume you inspected repository code.
         """ + " "
 
+
+    static let assessmentInstructions: [String: String] = [
+        "readiness": "Is the requested outcome in `issue` understandable enough to choose a model? A research goal or a short feature request can be ready even when the solution is unknown.",
+        "reasoning": "How hard are the reasoning decisions needed to implement `issue`? Distinguish a mechanical edit, scoped connected decisions, uncertain interacting causes, and novel unresolved research. Risk and missing acceptance details alone are not reasoning complexity.",
+        "scope": "What implementation boundaries does `issue` cross: one component, coordinated components, or separate services/repositories and distributed state? Judge the requested change, not the whole repository.",
+        "risk": "What are the consequences if the requested change in `issue` is wrong? Judge consequences separately from reasoning difficulty.",
+        "verification": "How can correctness of the requested change in `issue` be established? Distinguish a direct test, interacting scenarios, and concurrency/migration/production uncertainty.",
+    ]
+
+    static let effortBoundaries: [String: String] = [
+        "low": "Fits a mechanical edit or a direct implementation with known steps; extra reasoning adds little.",
+        "medium": "Fits scoped connected decisions; use low for mechanical work and high for unresolved interacting causes.",
+        "high": "Fits difficult diagnosis or design with interacting decisions; ordinary scoped work belongs at medium.",
+        "xhigh": "Fits several unresolved competing hypotheses or very hard long-horizon reasoning; ordinary complexity belongs at high.",
+        "max": "Fits exceptional reasoning where lower effort is plausibly inadequate; size, risk, and missing details alone do not qualify.",
+    ]
+
+    static let selectionInstructions = "Use `issue` as the primary evidence and `assessment` as supplementary judgments, not established facts. Compare each candidate's model guidance and effort boundary against the actual decisions required. High risk requires careful validation; it does not by itself require a stronger model or higher effort. Missing context and unknown assessments are absence of evidence, not evidence of exceptional complexity. Prefer a provisional fit to the stated work; allow the implementing model to explore ordinary missing details. Use catalog guidance as provisional routing policy, not measured success rates. Select needs_context when the requested outcome cannot be understood or no supported candidate is available."
+
     static let names = ["readiness", "reasoning", "scope", "risk", "verification"]
 
     static let criteria: [String: [(String, String)]] = [

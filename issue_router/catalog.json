@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-30.1",
+  "version": "2026-10-11.1",
   "verified_at": "2026-09-18",
   "surface": "provider API",
   "guidance_status": "Provisional hand-authored routing policy; not benchmark-calibrated. Supported effort subset, not exhaustive.",
@@ -38,7 +38,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Most efficient current OpenAI candidate for focused, well-specified, easily verified work; lowest price in the OpenAI lineup.",
+      "selection_guidance": "Most efficient current OpenAI candidate for focused, well-specified, easily verified work; lowest price in the OpenAI lineup. Routing boundary (uncalibrated hypothesis): prefer for mechanical edits and focused work with known steps and direct checks. Unresolved cross-system diagnosis or novel algorithm research belongs to a stronger candidate.",
       "sources": [
         "https://developers.openai.com/api/docs/models",
         "https://developers.openai.com/api/docs/pricing"
@@ -104,7 +104,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Balanced OpenAI candidate for complex coding, computer use, and professional work; near-Astra capability at lower cost according to official guidance. Prefer over GPT-6 Sol for this role; compare with Astra on representative tasks. Routing positioning is provisional, not benchmark-calibrated.",
+      "selection_guidance": "Balanced OpenAI candidate for complex coding, computer use, and professional work; near-Astra capability at lower cost according to official guidance. Prefer over GPT-6 Sol for this role; compare with Astra on representative tasks. Routing positioning is provisional, not benchmark-calibrated. Routing boundary (uncalibrated hypothesis): prefer for scoped features and complex software engineering using established algorithms and implementation patterns, including ordinary multi-component debugging. Novel algorithm invention, competing unresolved research hypotheses or proof obligations beyond known patterns belong to Astra.",
       "sources": [
         "https://developers.openai.com/api/docs/models/gpt-6.1-sol"
       ],
@@ -121,7 +121,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Most capable OpenAI candidate for difficult reasoning and hard end-to-end work.",
+      "selection_guidance": "Most capable OpenAI candidate for difficult reasoning and hard end-to-end work. Routing boundary (uncalibrated hypothesis): prefer when the central work is novel algorithm invention, unresolved research hypotheses, proof/counterexample exploration, or exceptionally difficult reasoning beyond established implementation patterns. Routine edits and scoped features belong to Luna or Sol under balanced/cost policies.",
       "sources": [
         "https://developers.openai.com/api/docs/models/gpt-6-astra"
       ]
@@ -154,7 +154,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Fast balanced candidate for scoped coding and moderate debugging; replaces Claude Sonnet 5 at the same price. Effort levels are recalibrated from Sonnet 5: medium suits well-specified agentic coding, high harder or longer work.",
+      "selection_guidance": "Fast balanced candidate for scoped coding and moderate debugging; replaces Claude Sonnet 5 at the same price. Effort levels are recalibrated from Sonnet 5: medium suits well-specified agentic coding, high harder or longer work. Routing boundary (uncalibrated hypothesis): prefer for scoped features and debugging with known patterns and bounded tests. Unresolved causes across services and long-running architecture work belong to Opus; novel algorithm research belongs to Fable.",
       "sources": [
         "https://platform.claude.com/docs/en/about-claude/models/overview",
         "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
@@ -190,7 +190,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Current default Claude candidate for long-running agentic coding and knowledge work; priced below Claude Opus 5. Default effort is medium, so raise effort for demanding work.",
+      "selection_guidance": "Current default Claude candidate for long-running agentic coding and knowledge work; priced below Claude Opus 5. Default effort is medium, so raise effort for demanding work. Routing boundary (uncalibrated hypothesis): prefer for complex cross-service diagnosis, concurrency, migrations and long-running implementation using established techniques. Scoped features belong to Sonnet; novel algorithm invention and unresolved proof-oriented research belong to Fable.",
       "sources": [
         "https://platform.claude.com/docs/en/about-claude/models/overview",
         "https://platform.claude.com/docs/en/build-with-claude/effort",
@@ -208,7 +208,7 @@
         "xhigh",
         "max"
       ],
-      "selection_guidance": "Candidate for demanding reasoning and long-horizon work beyond ordinary complex implementation.",
+      "selection_guidance": "Candidate for demanding reasoning and long-horizon work beyond ordinary complex implementation. Routing boundary (uncalibrated hypothesis): prefer for novel algorithms, unresolved research hypotheses and proof/counterexample exploration beyond established implementation patterns. Ordinary scoped features belong to Sonnet and complex engineering with known techniques belongs to Opus.",
       "sources": [
         "https://platform.claude.com/docs/en/models/overview",
         "https://platform.claude.com/docs/en/build-with-claude/effort"
