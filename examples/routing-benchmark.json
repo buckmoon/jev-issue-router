@@ -1,0 +1,148 @@
+[
+  {
+    "id": "copy-en",
+    "issue": {
+      "title": "Change settings button label",
+      "body": "In settings change Save to Save changes. Update existing snapshot. No behavior change."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "routine",
+      "scope": "local",
+      "risk": "low",
+      "verification": "simple"
+    },
+    "equivalence_group": "copy"
+  },
+  {
+    "id": "copy-ja",
+    "issue": {
+      "title": "設定画面のボタン文言変更",
+      "body": "設定画面の「保存」を「変更を保存」に変えてください。既存のスナップショットを更新。動作は変えません。"
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "routine",
+      "scope": "local",
+      "risk": "low",
+      "verification": "simple"
+    },
+    "equivalence_group": "copy"
+  },
+  {
+    "id": "feature-en",
+    "issue": {
+      "title": "Add paginated audit log",
+      "body": "Add an audit log endpoint and React table with pagination and date filters. Follow existing API patterns. Test filtering and pagination."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "moderate",
+      "scope": "cross_component",
+      "risk": "moderate",
+      "verification": "integration"
+    },
+    "equivalence_group": "feature"
+  },
+  {
+    "id": "feature-ja",
+    "issue": {
+      "title": "監査ログの一覧追加",
+      "body": "既存APIの形式に合わせて、ページングと日付フィルター付きの監査ログAPIとReactテーブルを追加。ページングと絞り込みの結合テストで確認。"
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "moderate",
+      "scope": "cross_component",
+      "risk": "moderate",
+      "verification": "integration"
+    },
+    "equivalence_group": "feature"
+  },
+  {
+    "id": "race-en",
+    "issue": {
+      "title": "Fix duplicate payment capture",
+      "body": "Concurrent webhook deliveries and reconciliation jobs sometimes capture twice. Cause unknown across API, queue and database. Diagnose interleavings, design idempotency and rollout with rollback. Prove exactly-once capture under retry and crash."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "complex",
+      "scope": "cross_system",
+      "risk": "high",
+      "verification": "difficult"
+    },
+    "equivalence_group": "race"
+  },
+  {
+    "id": "race-ja",
+    "issue": {
+      "title": "決済の二重確定を修正",
+      "body": "Webhookの並列配送と突合ジョブで決済が二重確定。API・キュー・DBをまたぐ原因は不明。競合を調査し、冪等性とロールバック可能な移行を設計。再試行とクラッシュ時も一度だけ確定することを検証。"
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "complex",
+      "scope": "cross_system",
+      "risk": "high",
+      "verification": "difficult"
+    },
+    "equivalence_group": "race"
+  },
+  {
+    "id": "research-en",
+    "issue": {
+      "title": "Research new synchronization algorithm",
+      "body": "Invent an algorithm for Byzantine offline replicas under an unresolved consistency requirement. No known algorithm fits. Develop a proof or counterexample and adversarial simulations, compare competing hypotheses."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "frontier",
+      "scope": "cross_system",
+      "risk": "unknown",
+      "verification": "difficult"
+    }
+  },
+  {
+    "id": "risk-routine",
+    "issue": {
+      "title": "Correct fixed authorization constant",
+      "body": "Change the known typo in the existing permission mapping from reports:reed to reports:read. Exact location and patch are given. Existing deny/allow unit tests establish correctness; no auth redesign."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "routine",
+      "scope": "local",
+      "risk": "high",
+      "verification": "simple"
+    }
+  },
+  {
+    "id": "sparse",
+    "issue": {
+      "title": "Improve settings",
+      "body": "Add a dark mode toggle to settings."
+    },
+    "expected_assessment": {
+      "readiness": "ready",
+      "reasoning": "moderate",
+      "scope": "local",
+      "risk": "low",
+      "verification": "unknown"
+    }
+  },
+  {
+    "id": "no-goal",
+    "issue": {
+      "title": "Help",
+      "body": "Please help."
+    },
+    "expected_assessment": {
+      "readiness": "insufficient",
+      "reasoning": "unknown",
+      "scope": "unknown",
+      "risk": "unknown",
+      "verification": "unknown"
+    }
+  }
+]

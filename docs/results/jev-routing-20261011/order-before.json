@@ -1,0 +1,3250 @@
+{
+  "note": "Separate original-engine sensitivity experiment; includes assessment and selection checks. No task execution or success-rate measurement.",
+  "cases": [
+    {
+      "id": "copy-en",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "ready": 0.98,
+              "insufficient": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "insufficient": 0.02,
+              "ready": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 1.0,
+              "moderate": 0.0,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.0,
+              "routine": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.92,
+            "probabilities": {
+              "local": 0.9400000000000001,
+              "cross_component": 0.0,
+              "cross_system": 0.0,
+              "unknown": 0.06
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.95,
+            "probabilities": {
+              "unknown": 0.04,
+              "cross_system": 0.0,
+              "cross_component": 0.0,
+              "local": 0.96
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.99,
+            "probabilities": {
+              "low": 0.99,
+              "moderate": 0.01,
+              "high": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.99,
+            "probabilities": {
+              "unknown": 0.0,
+              "high": 0.0,
+              "moderate": 0.01,
+              "low": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.92,
+            "probabilities": {
+              "simple": 0.94,
+              "integration": 0.0,
+              "difficult": 0.0,
+              "unknown": 0.06
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.83,
+            "probabilities": {
+              "unknown": 0.13,
+              "difficult": 0.0,
+              "integration": 0.0,
+              "simple": 0.87
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.01,
+              "stated": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.74,
+            "probabilities": {
+              "stated": 0.87,
+              "missing": 0.13
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.8,
+            "probabilities": {
+              "missing": 0.1,
+              "stated": 0.9
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "stated": 0.99,
+              "missing": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "missing": 0.02,
+              "stated": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.3,
+            "probabilities": {
+              "stated": 0.35,
+              "missing": 0.65
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.44,
+            "probabilities": {
+              "missing": 0.72,
+              "stated": 0.28
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.77,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.78,
+              "gpt-6-luna__medium": 0.08,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.1,
+              "gpt-6.1-sol__medium": 0.03,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.01,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.75,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__low": 0.03,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__low": 0.14,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.05,
+              "gpt-6-luna__low": 0.77,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.73,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.75,
+              "claude-sonnet-5-5__medium": 0.04,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.17,
+              "claude-opus-5-5__medium": 0.02,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.02,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.7,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.17,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.1,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.01,
+              "claude-sonnet-5-5__low": 0.72,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.97,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.98,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.97,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__low": 0.98,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "copy-ja",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "ready": 0.99,
+              "insufficient": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "insufficient": 0.02,
+              "ready": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 1.0,
+              "moderate": 0.0,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.0,
+              "routine": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.96,
+            "probabilities": {
+              "local": 0.97,
+              "cross_component": 0.0,
+              "cross_system": 0.0,
+              "unknown": 0.03
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.97,
+            "probabilities": {
+              "unknown": 0.02,
+              "cross_system": 0.0,
+              "cross_component": 0.0,
+              "local": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.99,
+            "probabilities": {
+              "low": 0.99,
+              "moderate": 0.01,
+              "high": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.96,
+            "probabilities": {
+              "unknown": 0.0,
+              "high": 0.0,
+              "moderate": 0.03,
+              "low": 0.97
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.95,
+            "probabilities": {
+              "simple": 0.96,
+              "integration": 0.0,
+              "difficult": 0.0,
+              "unknown": 0.04
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.89,
+            "probabilities": {
+              "unknown": 0.08,
+              "difficult": 0.0,
+              "integration": 0.0,
+              "simple": 0.92
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.72,
+            "probabilities": {
+              "stated": 0.86,
+              "missing": 0.14
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.82,
+            "probabilities": {
+              "missing": 0.09,
+              "stated": 0.91
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.34,
+            "probabilities": {
+              "stated": 0.33,
+              "missing": 0.67
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.44,
+            "probabilities": {
+              "missing": 0.72,
+              "stated": 0.28
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.78,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.79,
+              "gpt-6-luna__medium": 0.07,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.11,
+              "gpt-6.1-sol__medium": 0.02,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.01,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.83,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__low": 0.02,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__low": 0.09,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.04,
+              "gpt-6-luna__low": 0.84,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.68,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.7,
+              "claude-sonnet-5-5__medium": 0.03,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.23,
+              "claude-opus-5-5__medium": 0.02,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.02,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.68,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.2,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.09,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.01,
+              "claude-sonnet-5-5__low": 0.7,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.97,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.98,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.97,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__low": 0.98,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "feature-en",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 1.0,
+            "probabilities": {
+              "ready": 1.0,
+              "insufficient": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "insufficient": 0.01,
+              "ready": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.71,
+            "probabilities": {
+              "routine": 0.22,
+              "moderate": 0.77,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.69,
+            "probabilities": {
+              "unknown": 0.01,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.75,
+              "routine": 0.24
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "cross_component",
+            "confidence": 1.0,
+            "probabilities": {
+              "local": 0.0,
+              "cross_component": 1.0,
+              "cross_system": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "cross_component",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "cross_system": 0.0,
+              "cross_component": 1.0,
+              "local": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.39,
+            "probabilities": {
+              "low": 0.26,
+              "moderate": 0.54,
+              "high": 0.16,
+              "unknown": 0.04
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.43,
+            "probabilities": {
+              "unknown": 0.03,
+              "high": 0.22,
+              "moderate": 0.5700000000000001,
+              "low": 0.18
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "integration",
+            "confidence": 0.81,
+            "probabilities": {
+              "simple": 0.1,
+              "integration": 0.86,
+              "difficult": 0.0,
+              "unknown": 0.04
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "integration",
+            "confidence": 0.75,
+            "probabilities": {
+              "unknown": 0.04,
+              "difficult": 0.0,
+              "integration": 0.81,
+              "simple": 0.14
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.8,
+            "probabilities": {
+              "stated": 0.9,
+              "missing": 0.1
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.38,
+            "probabilities": {
+              "missing": 0.31,
+              "stated": 0.69
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "stated": 0.99,
+              "missing": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "missing": 0.02,
+              "stated": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.24,
+            "probabilities": {
+              "stated": 0.38,
+              "missing": 0.62
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.14,
+            "probabilities": {
+              "missing": 0.57,
+              "stated": 0.43
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__medium",
+            "confidence": 0.87,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "gpt-6-luna__medium": 0.06,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6.1-sol__medium": 0.88,
+              "gpt-6.1-sol__high": 0.01,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6-astra__medium": 0.05,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__medium",
+            "confidence": 0.56,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.03,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.59,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.38,
+              "gpt-6-luna__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__medium",
+            "confidence": 0.56,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.02,
+              "claude-sonnet-5-5__medium": 0.59,
+              "claude-sonnet-5-5__high": 0.01,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.0,
+              "claude-opus-5-5__medium": 0.37,
+              "claude-opus-5-5__high": 0.01,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__medium",
+            "confidence": 0.86,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.02,
+              "claude-fable-5-1__low": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.1,
+              "claude-opus-5-5__low": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.87,
+              "claude-sonnet-5-5__low": 0.01,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__medium",
+            "confidence": 0.99,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.01,
+              "grok-4.7__medium": 0.99,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__medium",
+            "confidence": 0.99,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.01,
+              "grok-4.7__medium": 0.99,
+              "grok-4.7__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "feature-ja",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "ready": 0.99,
+              "insufficient": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "insufficient": 0.01,
+              "ready": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.54,
+            "probabilities": {
+              "routine": 0.36,
+              "moderate": 0.63,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.5,
+            "probabilities": {
+              "unknown": 0.01,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.6,
+              "routine": 0.39
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "cross_component",
+            "confidence": 0.96,
+            "probabilities": {
+              "local": 0.03,
+              "cross_component": 0.97,
+              "cross_system": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "cross_component",
+            "confidence": 0.96,
+            "probabilities": {
+              "unknown": 0.0,
+              "cross_system": 0.0,
+              "cross_component": 0.97,
+              "local": 0.03
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.43,
+            "probabilities": {
+              "low": 0.36,
+              "moderate": 0.5700000000000001,
+              "high": 0.03,
+              "unknown": 0.04
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "moderate",
+            "confidence": 0.56,
+            "probabilities": {
+              "unknown": 0.04,
+              "high": 0.08,
+              "moderate": 0.67,
+              "low": 0.21
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "integration",
+            "confidence": 0.83,
+            "probabilities": {
+              "simple": 0.12,
+              "integration": 0.87,
+              "difficult": 0.0,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "integration",
+            "confidence": 0.87,
+            "probabilities": {
+              "unknown": 0.01,
+              "difficult": 0.0,
+              "integration": 0.9,
+              "simple": 0.09
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.66,
+            "probabilities": {
+              "stated": 0.83,
+              "missing": 0.17
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.36,
+            "probabilities": {
+              "missing": 0.32,
+              "stated": 0.68
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.01,
+              "stated": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.72,
+            "probabilities": {
+              "stated": 0.86,
+              "missing": 0.14
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.72,
+            "probabilities": {
+              "missing": 0.14,
+              "stated": 0.86
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__medium",
+            "confidence": 0.84,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "gpt-6-luna__medium": 0.12,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6.1-sol__medium": 0.85,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6-astra__medium": 0.03,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__medium",
+            "confidence": 0.47,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.03,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.5,
+              "gpt-6.1-sol__low": 0.01,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.46,
+              "gpt-6-luna__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__medium",
+            "confidence": 0.57,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.03,
+              "claude-sonnet-5-5__medium": 0.6,
+              "claude-sonnet-5-5__high": 0.01,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.0,
+              "claude-opus-5-5__medium": 0.36,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__medium",
+            "confidence": 0.89,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.01,
+              "claude-fable-5-1__low": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.06999999999999999,
+              "claude-opus-5-5__low": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.9,
+              "claude-sonnet-5-5__low": 0.02,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__medium",
+            "confidence": 0.97,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.02,
+              "grok-4.7__medium": 0.98,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__medium",
+            "confidence": 0.99,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__medium": 0.99,
+              "grok-4.7__low": 0.01,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "race-en",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "ready": 0.98,
+              "insufficient": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.92,
+            "probabilities": {
+              "insufficient": 0.04,
+              "ready": 0.96
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "complex",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 0.0,
+              "moderate": 0.0,
+              "complex": 1.0,
+              "frontier": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "complex",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 0.0,
+              "complex": 1.0,
+              "moderate": 0.0,
+              "routine": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.85,
+            "probabilities": {
+              "local": 0.0,
+              "cross_component": 0.11,
+              "cross_system": 0.89,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.91,
+            "probabilities": {
+              "unknown": 0.0,
+              "cross_system": 0.93,
+              "cross_component": 0.07,
+              "local": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 1.0,
+            "probabilities": {
+              "low": 0.0,
+              "moderate": 0.0,
+              "high": 1.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "high": 1.0,
+              "moderate": 0.0,
+              "low": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "difficult",
+            "confidence": 0.99,
+            "probabilities": {
+              "simple": 0.0,
+              "integration": 0.0,
+              "difficult": 0.99,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "difficult",
+            "confidence": 0.99,
+            "probabilities": {
+              "unknown": 0.01,
+              "difficult": 0.99,
+              "integration": 0.0,
+              "simple": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.01,
+              "stated": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.94,
+            "probabilities": {
+              "stated": 0.97,
+              "missing": 0.03
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.94,
+            "probabilities": {
+              "missing": 0.03,
+              "stated": 0.97
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.02,
+            "probabilities": {
+              "stated": 0.51,
+              "missing": 0.49
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.08,
+            "probabilities": {
+              "missing": 0.46,
+              "stated": 0.54
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__xhigh",
+            "confidence": 0.38,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__high": 0.01,
+              "gpt-6-luna__xhigh": 0.01,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6.1-sol__medium": 0.0,
+              "gpt-6.1-sol__high": 0.33,
+              "gpt-6.1-sol__xhigh": 0.42,
+              "gpt-6.1-sol__max": 0.03,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__high": 0.11,
+              "gpt-6-astra__xhigh": 0.08,
+              "gpt-6-astra__max": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__high",
+            "confidence": 0.58,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.01,
+              "gpt-6-astra__high": 0.06,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.27,
+              "gpt-6.1-sol__high": 0.61,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.01,
+              "gpt-6-luna__high": 0.03,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": false
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-opus-5-5__xhigh",
+            "confidence": 0.35,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.0,
+              "claude-sonnet-5-5__medium": 0.01,
+              "claude-sonnet-5-5__high": 0.06,
+              "claude-sonnet-5-5__xhigh": 0.06,
+              "claude-sonnet-5-5__max": 0.01,
+              "claude-opus-5-5__low": 0.0,
+              "claude-opus-5-5__medium": 0.01,
+              "claude-opus-5-5__high": 0.31,
+              "claude-opus-5-5__xhigh": 0.39,
+              "claude-opus-5-5__max": 0.03,
+              "claude-fable-5-1__low": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.05,
+              "claude-fable-5-1__xhigh": 0.06,
+              "claude-fable-5-1__max": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-opus-5-5__high",
+            "confidence": 0.66,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.06,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.08,
+              "claude-opus-5-5__high": 0.68,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.02,
+              "claude-sonnet-5-5__high": 0.16,
+              "claude-sonnet-5-5__medium": 0.0,
+              "claude-sonnet-5-5__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": false
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__high",
+            "confidence": 0.9,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.0,
+              "grok-4.7__medium": 0.01,
+              "grok-4.7__high": 0.92,
+              "grok-4.7__xhigh": 0.07
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__high",
+            "confidence": 0.89,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.09,
+              "grok-4.7__high": 0.91,
+              "grok-4.7__medium": 0.0,
+              "grok-4.7__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "race-ja",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "ready": 0.99,
+              "insufficient": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "insufficient": 0.01,
+              "ready": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "complex",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 0.0,
+              "moderate": 0.0,
+              "complex": 1.0,
+              "frontier": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "complex",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 0.0,
+              "complex": 1.0,
+              "moderate": 0.0,
+              "routine": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.88,
+            "probabilities": {
+              "local": 0.0,
+              "cross_component": 0.09,
+              "cross_system": 0.91,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.88,
+            "probabilities": {
+              "unknown": 0.0,
+              "cross_system": 0.91,
+              "cross_component": 0.09,
+              "local": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 1.0,
+            "probabilities": {
+              "low": 0.0,
+              "moderate": 0.0,
+              "high": 1.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "high": 1.0,
+              "moderate": 0.0,
+              "low": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "difficult",
+            "confidence": 1.0,
+            "probabilities": {
+              "simple": 0.0,
+              "integration": 0.0,
+              "difficult": 1.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "difficult",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "difficult": 1.0,
+              "integration": 0.0,
+              "simple": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "stated": 0.98,
+              "missing": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "missing": 0.02,
+              "stated": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.36,
+            "probabilities": {
+              "stated": 0.68,
+              "missing": 0.32
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.36,
+            "probabilities": {
+              "missing": 0.32,
+              "stated": 0.68
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__high",
+            "confidence": 0.57,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__high": 0.01,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__high": 0.6,
+              "gpt-6.1-sol__xhigh": 0.19,
+              "gpt-6.1-sol__max": 0.01,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6-astra__medium": 0.01,
+              "gpt-6-astra__high": 0.15,
+              "gpt-6-astra__xhigh": 0.02,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__high",
+            "confidence": 0.74,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.05,
+              "gpt-6-astra__medium": 0.01,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.09,
+              "gpt-6.1-sol__high": 0.76,
+              "gpt-6.1-sol__medium": 0.02,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.07,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-opus-5-5__high",
+            "confidence": 0.43,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.0,
+              "claude-sonnet-5-5__medium": 0.01,
+              "claude-sonnet-5-5__high": 0.16,
+              "claude-sonnet-5-5__xhigh": 0.04,
+              "claude-sonnet-5-5__max": 0.01,
+              "claude-opus-5-5__low": 0.0,
+              "claude-opus-5-5__medium": 0.02,
+              "claude-opus-5-5__high": 0.47,
+              "claude-opus-5-5__xhigh": 0.17,
+              "claude-opus-5-5__max": 0.01,
+              "claude-fable-5-1__low": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.1,
+              "claude-fable-5-1__xhigh": 0.01,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-opus-5-5__high",
+            "confidence": 0.63,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.05,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.03,
+              "claude-opus-5-5__high": 0.65,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.01,
+              "claude-sonnet-5-5__high": 0.26,
+              "claude-sonnet-5-5__medium": 0.0,
+              "claude-sonnet-5-5__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__high",
+            "confidence": 0.95,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.0,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__high": 0.96,
+              "grok-4.7__xhigh": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__high",
+            "confidence": 0.96,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.02,
+              "grok-4.7__high": 0.97,
+              "grok-4.7__medium": 0.01,
+              "grok-4.7__low": 0.0,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "research-en",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "insufficient",
+            "confidence": 0.28,
+            "probabilities": {
+              "ready": 0.36,
+              "insufficient": 0.64
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.14,
+            "probabilities": {
+              "insufficient": 0.43,
+              "ready": 0.57
+            }
+          },
+          "agrees": false
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "frontier",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 0.0,
+              "moderate": 0.0,
+              "complex": 0.0,
+              "frontier": 1.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "frontier",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 1.0,
+              "complex": 0.0,
+              "moderate": 0.0,
+              "routine": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.56,
+            "probabilities": {
+              "local": 0.0,
+              "cross_component": 0.01,
+              "cross_system": 0.67,
+              "unknown": 0.32
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "cross_system",
+            "confidence": 0.64,
+            "probabilities": {
+              "unknown": 0.27,
+              "cross_system": 0.73,
+              "cross_component": 0.0,
+              "local": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.77,
+            "probabilities": {
+              "low": 0.14,
+              "moderate": 0.01,
+              "high": 0.02,
+              "unknown": 0.83
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.81,
+            "probabilities": {
+              "unknown": 0.86,
+              "high": 0.03,
+              "moderate": 0.01,
+              "low": 0.1
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.51,
+            "probabilities": {
+              "simple": 0.0,
+              "integration": 0.01,
+              "difficult": 0.36,
+              "unknown": 0.63
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.39,
+            "probabilities": {
+              "unknown": 0.54,
+              "difficult": 0.45,
+              "integration": 0.01,
+              "simple": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.94,
+            "probabilities": {
+              "stated": 0.97,
+              "missing": 0.03
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.94,
+            "probabilities": {
+              "missing": 0.03,
+              "stated": 0.97
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.82,
+            "probabilities": {
+              "stated": 0.91,
+              "missing": 0.09
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.72,
+            "probabilities": {
+              "missing": 0.14,
+              "stated": 0.86
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.66,
+            "probabilities": {
+              "stated": 0.17,
+              "missing": 0.83
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.38,
+            "probabilities": {
+              "missing": 0.69,
+              "stated": 0.31
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.58,
+            "probabilities": {
+              "stated": 0.21,
+              "missing": 0.79
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.58,
+            "probabilities": {
+              "missing": 0.79,
+              "stated": 0.21
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__xhigh",
+            "confidence": 0.48,
+            "probabilities": {
+              "needs_context": 0.01,
+              "gpt-6-luna__low": 0.0,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.01,
+              "gpt-6-luna__max": 0.01,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6.1-sol__medium": 0.0,
+              "gpt-6.1-sol__high": 0.01,
+              "gpt-6.1-sol__xhigh": 0.51,
+              "gpt-6.1-sol__max": 0.08,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6-astra__medium": 0.01,
+              "gpt-6-astra__high": 0.01,
+              "gpt-6-astra__xhigh": 0.32,
+              "gpt-6-astra__max": 0.03
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__xhigh",
+            "confidence": 0.65,
+            "probabilities": {
+              "gpt-6-astra__max": 0.02,
+              "gpt-6-astra__xhigh": 0.14,
+              "gpt-6-astra__high": 0.02,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__low": 0.0,
+              "gpt-6.1-sol__max": 0.03,
+              "gpt-6.1-sol__xhigh": 0.67,
+              "gpt-6.1-sol__high": 0.04,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__low": 0.0,
+              "gpt-6-luna__max": 0.01,
+              "gpt-6-luna__xhigh": 0.04,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.0,
+              "gpt-6-luna__low": 0.0,
+              "needs_context": 0.01
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-fable-5-1__xhigh",
+            "confidence": 0.31,
+            "probabilities": {
+              "needs_context": 0.01,
+              "claude-sonnet-5-5__low": 0.0,
+              "claude-sonnet-5-5__medium": 0.0,
+              "claude-sonnet-5-5__high": 0.01,
+              "claude-sonnet-5-5__xhigh": 0.08,
+              "claude-sonnet-5-5__max": 0.02,
+              "claude-opus-5-5__low": 0.0,
+              "claude-opus-5-5__medium": 0.01,
+              "claude-opus-5-5__high": 0.04,
+              "claude-opus-5-5__xhigh": 0.31,
+              "claude-opus-5-5__max": 0.08,
+              "claude-fable-5-1__low": 0.0,
+              "claude-fable-5-1__medium": 0.01,
+              "claude-fable-5-1__high": 0.03,
+              "claude-fable-5-1__xhigh": 0.35,
+              "claude-fable-5-1__max": 0.05
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-opus-5-5__xhigh",
+            "confidence": 0.43,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.03,
+              "claude-fable-5-1__xhigh": 0.22,
+              "claude-fable-5-1__high": 0.02,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.0,
+              "claude-opus-5-5__max": 0.09,
+              "claude-opus-5-5__xhigh": 0.47000000000000003,
+              "claude-opus-5-5__high": 0.05,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.0,
+              "claude-sonnet-5-5__max": 0.01,
+              "claude-sonnet-5-5__xhigh": 0.1,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.0,
+              "claude-sonnet-5-5__low": 0.0,
+              "needs_context": 0.01
+            }
+          },
+          "agrees": false
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__xhigh",
+            "confidence": 0.89,
+            "probabilities": {
+              "needs_context": 0.01,
+              "grok-4.7__low": 0.0,
+              "grok-4.7__medium": 0.01,
+              "grok-4.7__high": 0.07,
+              "grok-4.7__xhigh": 0.91
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__xhigh",
+            "confidence": 0.85,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.88,
+              "grok-4.7__high": 0.11,
+              "grok-4.7__medium": 0.0,
+              "grok-4.7__low": 0.0,
+              "needs_context": 0.01
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "risk-routine",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "ready": 0.98,
+              "insufficient": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.92,
+            "probabilities": {
+              "insufficient": 0.04,
+              "ready": 0.96
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 1.0,
+              "moderate": 0.0,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 0.0,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.0,
+              "routine": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.99,
+            "probabilities": {
+              "local": 0.99,
+              "cross_component": 0.0,
+              "cross_system": 0.0,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.97,
+            "probabilities": {
+              "unknown": 0.02,
+              "cross_system": 0.0,
+              "cross_component": 0.0,
+              "local": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 0.91,
+            "probabilities": {
+              "low": 0.03,
+              "moderate": 0.03,
+              "high": 0.93,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 0.92,
+            "probabilities": {
+              "unknown": 0.01,
+              "high": 0.94,
+              "moderate": 0.03,
+              "low": 0.02
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.99,
+            "probabilities": {
+              "simple": 0.99,
+              "integration": 0.0,
+              "difficult": 0.0,
+              "unknown": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "simple",
+            "confidence": 0.97,
+            "probabilities": {
+              "unknown": 0.02,
+              "difficult": 0.0,
+              "integration": 0.0,
+              "simple": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 0.0,
+              "stated": 1.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "stated": 0.98,
+              "missing": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "missing": 0.02,
+              "stated": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.96,
+            "probabilities": {
+              "stated": 0.98,
+              "missing": 0.02
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.94,
+            "probabilities": {
+              "missing": 0.03,
+              "stated": 0.97
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.68,
+            "probabilities": {
+              "stated": 0.84,
+              "missing": 0.16
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.62,
+            "probabilities": {
+              "missing": 0.19,
+              "stated": 0.81
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.8,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.81,
+              "gpt-6-luna__medium": 0.03,
+              "gpt-6-luna__high": 0.02,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.01,
+              "gpt-6.1-sol__low": 0.11,
+              "gpt-6.1-sol__medium": 0.01,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.01,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6-luna__low",
+            "confidence": 0.83,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.0,
+              "gpt-6-astra__low": 0.03,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.0,
+              "gpt-6.1-sol__low": 0.09,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.02,
+              "gpt-6-luna__medium": 0.02,
+              "gpt-6-luna__low": 0.84,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.69,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.71,
+              "claude-sonnet-5-5__medium": 0.03,
+              "claude-sonnet-5-5__high": 0.01,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.22,
+              "claude-opus-5-5__medium": 0.01,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.02,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.73,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__low": 0.1,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.0,
+              "claude-opus-5-5__low": 0.13,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.01,
+              "claude-sonnet-5-5__medium": 0.01,
+              "claude-sonnet-5-5__low": 0.75,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.92,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.94,
+              "grok-4.7__medium": 0.04,
+              "grok-4.7__high": 0.02,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.96,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.01,
+              "grok-4.7__medium": 0.02,
+              "grok-4.7__low": 0.97,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    },
+    {
+      "id": "sparse",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.98,
+            "probabilities": {
+              "ready": 0.99,
+              "insufficient": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "ready",
+            "confidence": 0.96,
+            "probabilities": {
+              "insufficient": 0.02,
+              "ready": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 0.4,
+            "probabilities": {
+              "routine": 0.52,
+              "moderate": 0.35,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 0.13
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "routine",
+            "confidence": 0.69,
+            "probabilities": {
+              "unknown": 0.1,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.15,
+              "routine": 0.75
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.67,
+            "probabilities": {
+              "local": 0.75,
+              "cross_component": 0.01,
+              "cross_system": 0.0,
+              "unknown": 0.24
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "local",
+            "confidence": 0.76,
+            "probabilities": {
+              "unknown": 0.17,
+              "cross_system": 0.0,
+              "cross_component": 0.01,
+              "local": 0.82
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.97,
+            "probabilities": {
+              "low": 0.98,
+              "moderate": 0.02,
+              "high": 0.0,
+              "unknown": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "low",
+            "confidence": 0.97,
+            "probabilities": {
+              "unknown": 0.0,
+              "high": 0.0,
+              "moderate": 0.02,
+              "low": 0.98
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.55,
+            "probabilities": {
+              "simple": 0.33,
+              "integration": 0.01,
+              "difficult": 0.0,
+              "unknown": 0.66
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.63,
+            "probabilities": {
+              "unknown": 0.72,
+              "difficult": 0.0,
+              "integration": 0.0,
+              "simple": 0.28
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 1.0,
+              "missing": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.01,
+              "stated": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.26,
+            "probabilities": {
+              "stated": 0.63,
+              "missing": 0.37
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.12,
+            "probabilities": {
+              "missing": 0.44,
+              "stated": 0.56
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "stated": 0.99,
+              "missing": 0.01
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "stated",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.01,
+              "stated": 0.99
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.98,
+            "probabilities": {
+              "stated": 0.01,
+              "missing": 0.99
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.99,
+              "stated": 0.01
+            }
+          },
+          "agrees": true
+        },
+        "openai": {
+          "original": {
+            "type": "choice",
+            "choice": "gpt-6.1-sol__medium",
+            "confidence": 0.56,
+            "probabilities": {
+              "needs_context": 0.0,
+              "gpt-6-luna__low": 0.07,
+              "gpt-6-luna__medium": 0.19,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6.1-sol__low": 0.12,
+              "gpt-6.1-sol__medium": 0.59,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6-astra__low": 0.01,
+              "gpt-6-astra__medium": 0.02,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "gpt-6-luna__medium",
+            "confidence": 0.35,
+            "probabilities": {
+              "gpt-6-astra__max": 0.0,
+              "gpt-6-astra__xhigh": 0.0,
+              "gpt-6-astra__high": 0.0,
+              "gpt-6-astra__medium": 0.02,
+              "gpt-6-astra__low": 0.02,
+              "gpt-6.1-sol__max": 0.0,
+              "gpt-6.1-sol__xhigh": 0.0,
+              "gpt-6.1-sol__high": 0.0,
+              "gpt-6.1-sol__medium": 0.23,
+              "gpt-6.1-sol__low": 0.2,
+              "gpt-6-luna__max": 0.0,
+              "gpt-6-luna__xhigh": 0.0,
+              "gpt-6-luna__high": 0.0,
+              "gpt-6-luna__medium": 0.39,
+              "gpt-6-luna__low": 0.14,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": false
+        },
+        "claude": {
+          "original": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.42,
+            "probabilities": {
+              "needs_context": 0.0,
+              "claude-sonnet-5-5__low": 0.46,
+              "claude-sonnet-5-5__medium": 0.28,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-opus-5-5__low": 0.05,
+              "claude-opus-5-5__medium": 0.19,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__max": 0.0,
+              "claude-fable-5-1__low": 0.01,
+              "claude-fable-5-1__medium": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__max": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "claude-sonnet-5-5__low",
+            "confidence": 0.4,
+            "probabilities": {
+              "claude-fable-5-1__max": 0.0,
+              "claude-fable-5-1__xhigh": 0.0,
+              "claude-fable-5-1__high": 0.0,
+              "claude-fable-5-1__medium": 0.01,
+              "claude-fable-5-1__low": 0.02,
+              "claude-opus-5-5__max": 0.0,
+              "claude-opus-5-5__xhigh": 0.0,
+              "claude-opus-5-5__high": 0.0,
+              "claude-opus-5-5__medium": 0.04,
+              "claude-opus-5-5__low": 0.07,
+              "claude-sonnet-5-5__max": 0.0,
+              "claude-sonnet-5-5__xhigh": 0.0,
+              "claude-sonnet-5-5__high": 0.0,
+              "claude-sonnet-5-5__medium": 0.42,
+              "claude-sonnet-5-5__low": 0.44,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "grok": {
+          "original": {
+            "type": "choice",
+            "choice": "grok-4.7__low",
+            "confidence": 0.42,
+            "probabilities": {
+              "needs_context": 0.0,
+              "grok-4.7__low": 0.54,
+              "grok-4.7__medium": 0.46,
+              "grok-4.7__high": 0.0,
+              "grok-4.7__xhigh": 0.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "grok-4.7__medium",
+            "confidence": 0.45,
+            "probabilities": {
+              "grok-4.7__xhigh": 0.0,
+              "grok-4.7__high": 0.01,
+              "grok-4.7__medium": 0.56,
+              "grok-4.7__low": 0.43,
+              "needs_context": 0.0
+            }
+          },
+          "agrees": false
+        }
+      }
+    },
+    {
+      "id": "no-goal",
+      "checks": {
+        "readiness": {
+          "original": {
+            "type": "choice",
+            "choice": "insufficient",
+            "confidence": 1.0,
+            "probabilities": {
+              "ready": 0.0,
+              "insufficient": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "insufficient",
+            "confidence": 1.0,
+            "probabilities": {
+              "insufficient": 1.0,
+              "ready": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "reasoning": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "routine": 0.0,
+              "moderate": 0.0,
+              "complex": 0.0,
+              "frontier": 0.0,
+              "unknown": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 1.0,
+              "frontier": 0.0,
+              "complex": 0.0,
+              "moderate": 0.0,
+              "routine": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "scope": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "local": 0.0,
+              "cross_component": 0.0,
+              "cross_system": 0.0,
+              "unknown": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 1.0,
+              "cross_system": 0.0,
+              "cross_component": 0.0,
+              "local": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "risk": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.95,
+            "probabilities": {
+              "low": 0.04,
+              "moderate": 0.0,
+              "high": 0.0,
+              "unknown": 0.96
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.96,
+            "probabilities": {
+              "unknown": 0.97,
+              "high": 0.0,
+              "moderate": 0.0,
+              "low": 0.03
+            }
+          },
+          "agrees": true
+        },
+        "verification": {
+          "original": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "simple": 0.0,
+              "integration": 0.0,
+              "difficult": 0.0,
+              "unknown": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 1.0,
+            "probabilities": {
+              "unknown": 1.0,
+              "difficult": 0.0,
+              "integration": 0.0,
+              "simple": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_goal": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 0.0,
+              "missing": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 1.0,
+              "stated": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_current_state": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.94,
+            "probabilities": {
+              "stated": 0.03,
+              "missing": 0.97
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.98,
+            "probabilities": {
+              "missing": 0.99,
+              "stated": 0.01
+            }
+          },
+          "agrees": true
+        },
+        "context_target": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 0.0,
+              "missing": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 1.0,
+              "stated": 0.0
+            }
+          },
+          "agrees": true
+        },
+        "context_completion": {
+          "original": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "stated": 0.0,
+              "missing": 1.0
+            }
+          },
+          "reversed": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 1.0,
+            "probabilities": {
+              "missing": 1.0,
+              "stated": 0.0
+            }
+          },
+          "agrees": true
+        }
+      }
+    }
+  ]
+}

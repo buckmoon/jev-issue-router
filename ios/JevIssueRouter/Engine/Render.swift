@@ -40,6 +40,13 @@ enum Render {
             let effort = rec["effort"]?.stringValue ?? "?"
             lines.append("• \(provider): \(model) / \(effort) "
                 + "(選択確率 \(percent(probability)), confidence \(String(format: "%.2f", confidence)))")
+            let consistency: JSONValue = rec["order_check"]?["consistent"] ?? .bool(true)
+            if case .bool(false) = consistency {
+                let reverseChoice = rec["order_check"]?["reversed_judgment"]?["choice"]?.stringValue ?? ""
+                let label = reverseChoice == "needs_context" ? "選定保留"
+                    : reverseChoice.replacingOccurrences(of: "__", with: " / ")
+                lines.append("  順序反転で不一致: \(label)。判断条件を補足して再評価してください。")
+            }
             let alternatives = Router.rankedDescending(probabilities.compactMap { pair in
                 guard pair.key != choice, let value = pair.value.doubleValue, value > 0 else { return nil }
                 return (key: pair.key, value: value)

@@ -25,6 +25,7 @@ issue-model = "issue_router.cli:main"
 issue-model-slack = "issue_router.slack:main"
 issue-model-app = "issue_router.app:main"
 issue-model-catalog = "issue_router.catalog_update:main"
+issue-model-benchmark = "issue_router.benchmark:main"
 
 [tool.setuptools.package-data]
 issue_router = ["catalog.json", "model_watch.json"]

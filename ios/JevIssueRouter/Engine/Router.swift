@@ -29,7 +29,7 @@ struct ValidatedAnswer {
 /// invented. The request body is the same for Jev and Clef except for "model".
 enum Router {
     static let providers = Catalog.providers
-    static let policyVersion = "2026-09-20.4"
+    static let policyVersion = "2026-10-11.1"
     static let maxInputChars = 60000
     static let topCandidates = 5
     static let maxQuestions = 64  // Clef's per-request limit; Jev's is no lower
@@ -98,7 +98,7 @@ enum Router {
 
         var questions: [Question] = Rubrics.names.map { name in
             Question(name: name, criteria: Rubrics.criteria[name] ?? [],
-                     instructions: guardText + "Classify the issue's \(name) using the supplied criteria.")
+                     instructions: guardText + (Rubrics.assessmentInstructions[name] ?? ""))
         }
         questions += Rubrics.contextNames.map { name in
             Question(name: "context_" + name, criteria: Rubrics.contextCriteria[name] ?? [],
@@ -183,6 +183,7 @@ enum Router {
                 for (level, effort) in model.efforts.enumerated() {
                     let choice = model.id + "__" + effort
                     var text = model.selectionGuidance + " Effort: " + catalog.guidance(for: effort)
+                        + " Boundary: " + (Rubrics.effortBoundaries[effort] ?? catalog.guidance(for: effort))
                     if Policies.ordinal.contains(policy) {
                         // The catalog lists each provider's models from most economical to most capable.
                         text += " Catalog position: model \(position) of \(models.count) for this provider "
@@ -198,14 +199,11 @@ enum Router {
             selectionQuestions.append(Question(name: provider, criteria: criteria, instructions: guardText
                 + "Select one \(provider) model and effort pair for implementing this issue. "
                 + "Apply only the selected policy '\(policy)': \(objective) "
-                + "Use catalog guidance as provisional routing policy, not measured success rates. "
-                + "Consider assessment probabilities, not just their winning labels. High risk warrants careful "
-                + "verification but does not automatically mean maximum effort. `missing_context` lists task "
-                + "aspects the issue leaves open, and an 'unknown' assessment means the issue does not settle that "
-                + "aspect. The goal is known, so the implementing model will have to plan the work and make those "
-                + "decisions itself: treat open aspects as added difficulty that favors a pair capable of planning "
-                + "under ambiguity, not as grounds to abstain. Select needs_context only if no pair can be "
-                + "distinguished at all."))
+                + Rubrics.selectionInstructions))
+            if let original = selectionQuestions.last {
+                selectionQuestions.append(Question(name: "order_" + provider,
+                    criteria: Array(original.criteria.reversed()), instructions: original.instructions))
+            }
         }
 
         let state: [(String, JSONValue)] = evidence + [
@@ -224,7 +222,16 @@ enum Router {
         var chosen: [Bool] = []
         for provider in providers {
             guard let answer = selections[provider], let pairs = lookup[provider] else { continue }
-            var entry: [(String, JSONValue)] = [("judgment", answer.raw)]
+            guard let reverse = selections["order_" + provider] else {
+                throw RouterError("Invalid or incomplete Jev choice/probabilities")
+            }
+            let consistent = answer.choice == reverse.choice
+            var entry: [(String, JSONValue)] = [("judgment", answer.raw),
+                ("order_check", .fields([("consistent", .bool(consistent)), ("reversed_judgment", reverse.raw)]))]
+            if !consistent {
+                warnings.append("\(provider): 候補の順序を反転すると判定が変わりました。推薦は暫定です。"
+                    + "両方の分布を確認し、タスクの判断条件を補足して再評価してください。")
+            }
             if answer.choice == "needs_context" {
                 // Jev withheld a single pick; report where its probability went instead of inventing one.
                 let ranked = rankedDescending(answer.probabilities.filter {

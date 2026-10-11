@@ -2,10 +2,16 @@
 import json
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
 
 from issue_router import evaluators
 from issue_router.core import MAX_INPUT_CHARS, MAX_QUESTIONS, POLICY_VERSION, PROVIDERS, TOP_CANDIDATES
+from issue_router.core import ASSESSMENT_INSTRUCTIONS, EFFORT_BOUNDARIES, SELECTION_INSTRUCTIONS
+from issue_router.core import load_catalog, route, render
 from issue_router.policies import ORDINAL_POLICIES, POLICIES, POLICY_DESCRIPTIONS, TOP_MODEL_POLICIES
 
 IOS = Path(__file__).resolve().parent.parent / "ios" / "JevIssueRouter"
@@ -55,6 +61,16 @@ class IOSPortTest(unittest.TestCase):
             for option in options:
                 self.assertIn(f'("{option}"', swift, f"{rubric}/{option} missing from the Swift port")
 
+    def test_question_boundaries_match_exactly(self):
+        swift = source("Engine/Rubrics.swift")
+        for mapping in (ASSESSMENT_INSTRUCTIONS, EFFORT_BOUNDARIES):
+            for key, value in mapping.items():
+                self.assertIn(json.dumps(key) + ": " + json.dumps(value), swift)
+        self.assertIn("static let selectionInstructions = " + json.dumps(SELECTION_INSTRUCTIONS), swift)
+        router = source("Engine/Router.swift")
+        self.assertIn('Question(name: "order_" + provider', router)
+        self.assertIn('("order_check", .fields', router)
+
     def test_evaluators_match(self):
         swift = source("Engine/Evaluator.swift")
 
@@ -101,6 +117,67 @@ class IOSPortTest(unittest.TestCase):
             self.assertNotIn("TYPESAFE_API_KEY=", text)
             self.assertNotIn("CLOUDFLARE_API_TOKEN=", text)
             self.assertIsNone(re.search(r'accounts/[0-9a-f]{32}', text), f"{path.name} contains an account ID")
+
+
+@unittest.skipUnless(sys.platform == "darwin" and shutil.which("swiftc"), "Swift parity needs the macOS toolchain")
+class IOSRuntimeParityTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.tmp.cleanup)
+        cls.binary = str(Path(cls.tmp.name) / "ios-parity")
+        files = [IOS / "Engine" / (name + ".swift") for name in
+                 ("JSONValue", "Catalog", "Policies", "Rubrics", "Evaluator", "Router", "Render")]
+        # WMO avoids Swift's cross-file enum-reference compilation issue in a standalone harness.
+        subprocess.run(["swiftc", "-whole-module-optimization", "-parse-as-library", *map(str, files),
+                        str(Path(__file__).with_name("ios_parity.swift")), "-o", cls.binary],
+                       capture_output=True, text=True, check=True, timeout=90)
+
+    @staticmethod
+    def response(request, mode):
+        answers = {}
+        for name, question in request["questions"].items():
+            key = name.removeprefix("order_")
+            choices = list(question["criteria"])
+            choice = choices[0]
+            if key in PROVIDERS:
+                choice = next((c for c in choices if c != "needs_context"), "needs_context")
+                if mode == "held" or (mode == "disagree" and name.startswith("order_")):
+                    choice = "needs_context"
+            if mode == "unready" and key == "readiness":
+                choice = "insufficient"
+            if mode == "unready" and key == "context_goal":
+                choice = "missing"
+            answers[name] = {"type": "choice", "choice": choice, "confidence": 1,
+                             "probabilities": {c: float(c == choice) for c in choices}}
+        return {"model": "test-jev", "answers": answers, "usage": {"input_tokens": 10, "output_tokens": 5}}
+
+    def test_requests_results_and_render_match_with_order_checks_and_abstention(self):
+        for policy in ("balanced", "value", "min-cost", "max-quality"):
+            for mode in ("consistent", "disagree", "held", "unready"):
+                with self.subTest(policy=policy, mode=mode):
+                    issue = {"title": "変更", "body": "Change button label", "context": ""}
+                    requests, responses = [], []
+
+                    def call(request):
+                        requests.append(request)
+                        response = self.response(request, mode)
+                        responses.append(response)
+                        return response
+
+                    result = route(issue, policy=policy, call=call)
+                    text = render(result).replace("--policy ", "方針 ")
+                    path = Path(self.tmp.name) / "input.json"
+                    path.write_text(json.dumps({"issue": issue, "policy": policy,
+                                                "catalog": load_catalog(), "responses": responses}), encoding="utf-8")
+                    proc = subprocess.run([self.binary, str(path)], capture_output=True, text=True,
+                                          check=True, timeout=20)
+                    swift = json.loads(proc.stdout)
+                    self.assertEqual(requests, swift["requests"])
+                    result.pop("created_at")
+                    swift["result"].pop("created_at")
+                    self.assertEqual(result, swift["result"])
+                    self.assertEqual(text, swift["render"])
 
 
 if __name__ == "__main__":

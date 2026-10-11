@@ -11,7 +11,7 @@ from .evaluators import Evaluator, NoRedirect, api_key, evaluate, make_evaluator
 from .policies import ORDINAL_POLICIES, POLICIES, POLICY_GUIDANCE, TOP_MODEL_POLICIES
 
 PROVIDERS = ("openai", "claude", "grok")
-POLICY_VERSION = "2026-09-20.4"
+POLICY_VERSION = "2026-10-11.1"
 MAX_INPUT_CHARS = 60000
 TOP_CANDIDATES = 5
 MAX_QUESTIONS = 64  # Clef's per-request limit; Jev's is no lower
@@ -96,6 +96,37 @@ LABELS = {
     "cross_system": "複数システム", "low": "小さい", "high": "大きい",
     "simple": "単純", "integration": "結合検証", "difficult": "難しい",
 }
+
+# Question IDs are not supplied to the model. State the actual decision and its boundaries.
+ASSESSMENT_INSTRUCTIONS = {
+    "readiness": "Is the requested outcome in `issue` understandable enough to choose a model? "
+                 "A research goal or a short feature request can be ready even when the solution is unknown.",
+    "reasoning": "How hard are the reasoning decisions needed to implement `issue`? "
+                 "Distinguish a mechanical edit, scoped connected decisions, uncertain interacting causes, "
+                 "and novel unresolved research. Risk and missing acceptance details alone are not reasoning complexity.",
+    "scope": "What implementation boundaries does `issue` cross: one component, coordinated components, "
+             "or separate services/repositories and distributed state? Judge the requested change, not the whole repository.",
+    "risk": "What are the consequences if the requested change in `issue` is wrong? "
+            "Judge consequences separately from reasoning difficulty.",
+    "verification": "How can correctness of the requested change in `issue` be established? "
+                    "Distinguish a direct test, interacting scenarios, and concurrency/migration/production uncertainty.",
+}
+EFFORT_BOUNDARIES = {
+    "low": "Fits a mechanical edit or a direct implementation with known steps; extra reasoning adds little.",
+    "medium": "Fits scoped connected decisions; use low for mechanical work and high for unresolved interacting causes.",
+    "high": "Fits difficult diagnosis or design with interacting decisions; ordinary scoped work belongs at medium.",
+    "xhigh": "Fits several unresolved competing hypotheses or very hard long-horizon reasoning; ordinary complexity belongs at high.",
+    "max": "Fits exceptional reasoning where lower effort is plausibly inadequate; size, risk, and missing details alone do not qualify.",
+}
+SELECTION_INSTRUCTIONS = (
+    "Use `issue` as the primary evidence and `assessment` as supplementary judgments, not established facts. "
+    "Compare each candidate's model guidance and effort boundary against the actual decisions required. "
+    "High risk requires careful validation; it does not by itself require a stronger model or higher effort. "
+    "Missing context and unknown assessments are absence of evidence, not evidence of exceptional complexity. "
+    "Prefer a provisional fit to the stated work; allow the implementing model to explore ordinary missing details. "
+    "Use catalog guidance as provisional routing policy, not measured success rates. "
+    "Select needs_context when the requested outcome cannot be understood or no supported candidate is available."
+)
 
 
 def load_catalog(path=None):
@@ -208,7 +239,7 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
     if policy not in POLICIES:
         raise RouterError("Unknown policy")
     questions = {name: {"type": "choice", "criteria": criteria,
-        "instructions": guard + f"Classify the issue's {name} using the supplied criteria."}
+        "instructions": guard + ASSESSMENT_INSTRUCTIONS[name]}
         for name, criteria in RUBRICS.items()}
     for name, criteria in CONTEXT_CHECKS.items():
         questions["context_" + name] = {"type": "choice", "criteria": criteria, "instructions": guard +
@@ -274,7 +305,8 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
                 continue  # the policy fixes the model to the provider's most capable; Jev selects the effort
             for level, effort in enumerate(model["efforts"], 1):
                 choice = model["id"] + "__" + effort
-                criteria[choice] = model["selection_guidance"] + " Effort: " + catalog["effort_guidance"][effort]
+                criteria[choice] = (model["selection_guidance"] + " Effort: " + catalog["effort_guidance"][effort]
+                                    + " Boundary: " + EFFORT_BOUNDARIES.get(effort, catalog["effort_guidance"][effort]))
                 if policy in ORDINAL_POLICIES:
                     # The catalog lists each provider's models from most economical to most capable.
                     criteria[choice] += (f" Catalog position: model {position} of {len(models)} for this provider "
@@ -286,14 +318,12 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
         questions[provider] = {"type": "choice", "criteria": criteria, "instructions": guard +
             f"Select one {provider} model and effort pair for implementing this issue. "
             f"Apply only the selected policy '{policy}': {POLICIES[policy]} "
-            "Use catalog guidance as provisional routing policy, not measured success rates. "
-            "Consider assessment probabilities, not just their winning labels. High risk warrants careful "
-            "verification but does not automatically mean maximum effort. `missing_context` lists task "
-            "aspects the issue leaves open, and an 'unknown' assessment means the issue does not settle that "
-            "aspect. The goal is known, so the implementing model will have to plan the work and make those "
-            "decisions itself: treat open aspects as added difficulty that favors a pair capable of planning "
-            "under ambiguity, not as grounds to abstain. Select needs_context only if no pair can be "
-            "distinguished at all."}
+            + SELECTION_INSTRUCTIONS}
+        # Independent checks share the selection state and call. Never average the distributions
+        # or silently substitute the reversed winner: both are real evaluator judgments.
+        questions["order_" + provider] = {
+            **questions[provider], "criteria": dict(reversed(list(criteria.items())))
+        }
     if len(questions) > MAX_QUESTIONS:
         raise RouterError("Evaluator requests support at most 64 questions")
     second = call({"model": evaluator.models["select"], "state": {**evidence, "assessment": assessment,
@@ -305,6 +335,13 @@ def route(issue, *, catalog=None, call=None, policy="balanced", evaluator=None, 
             continue
         choice = answer["choice"]
         rec = {"judgment": answer, "status": "needs_context"}
+        reverse = selections["order_" + provider]
+        consistent = choice == reverse["choice"]
+        rec["order_check"] = {"consistent": consistent, "reversed_judgment": reverse}
+        if not consistent:
+            result["warnings"].append(
+                f"{provider}: 候補の順序を反転すると判定が変わりました。推薦は暫定です。"
+                "両方の分布を確認し、タスクの判断条件を補足して再評価してください。")
         if choice == "needs_context":
             # Jev withheld a single pick; report where its probability went instead of inventing one.
             ranked = sorted(((k, v) for k, v in answer["probabilities"].items() if k != "needs_context" and v > 0),
@@ -352,6 +389,11 @@ def render(result, slack=False):
         probability = j["probabilities"][j["choice"]]
         lines.append(f"• {provider}: {rec['model']} / {rec['effort']} "
                      f"(選択確率 {probability:.0%}, confidence {j['confidence']:.2f})")
+        check = rec.get("order_check")
+        if check and not check["consistent"]:
+            reversed_choice = check["reversed_judgment"]["choice"]
+            label = "選定保留" if reversed_choice == "needs_context" else reversed_choice.replace("__", " / ")
+            lines.append(f"  順序反転で不一致: {label}。判断条件を補足して再評価してください。")
         alternatives = sorted(((k, v) for k, v in j["probabilities"].items() if k != j["choice"] and v > 0),
                               key=lambda item: item[1], reverse=True)
         if alternatives:
